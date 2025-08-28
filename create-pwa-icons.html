@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Free4 PWA Icon Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        canvas { border: 1px solid #ccc; margin: 10px; }
+        .icons { display: flex; flex-wrap: wrap; gap: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Free4 PWA Icons</h1>
+    <div class="icons">
+        <div>
+            <h3>192x192</h3>
+            <canvas id="icon192" width="192" height="192"></canvas>
+            <br><button onclick="download('icon192', 'icon-192x192.png')">Download</button>
+        </div>
+        <div>
+            <h3>512x512</h3>
+            <canvas id="icon512" width="512" height="512"></canvas>
+            <br><button onclick="download('icon512', 'icon-512x512.png')">Download</button>
+        </div>
+    </div>
+
+    <script>
+        function createIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient (Free4 colors)
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#0ea5e9'); // cyan-600
+            gradient.addColorStop(1, '#06b6d4'); // cyan-500
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Add some rounded corners
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, size * 0.1);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // Add "F4" text
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${size * 0.3}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('F4', size / 2, size / 2);
+            
+            // Add small subtitle
+            ctx.font = `${size * 0.08}px Arial`;
+            ctx.fillText('Free4', size / 2, size * 0.75);
+        }
+
+        function download(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        // Create icons
+        createIcon('icon192', 192);
+        createIcon('icon512', 512);
+    </script>
+</body>
+</html>

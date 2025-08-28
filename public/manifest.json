@@ -1,0 +1,28 @@
+{
+  "name": "Free4 - Spontane Meetups mit Freunden",
+  "short_name": "Free4",
+  "description": "Zeig deinen Freunden wann du Zeit hast und entdecke spontane Möglichkeiten euch zu treffen",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0ea5e9",
+  "theme_color": "#0ea5e9",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["social", "lifestyle"],
+  "lang": "de",
+  "scope": "/",
+  "id": "free4-app"
+}
