@@ -22,7 +22,7 @@ export default function Dashboard({ user }: DashboardProps) {
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [editingEvent, setEditingEvent] = useState<Free4Event | null>(null)
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0)
-  const [eventMatches, setEventMatches] = useState<{[eventId: string]: any[]}>({})
+  const [eventMatches, setEventMatches] = useState<any>({})
   const [selectedMatch, setSelectedMatch] = useState<any>(null)
   const [isRefreshingMatches, setIsRefreshingMatches] = useState(false)
   const matchCheckInterval = useRef<NodeJS.Timeout | null>(null)
@@ -327,7 +327,7 @@ export default function Dashboard({ user }: DashboardProps) {
     }
   }
 
-  const checkEventMatch = (myEvent: Free4Event, friendEvent: any) => {
+  const checkEventMatch = (myEvent: Free4Event, friendEvent: Free4Event) => {
     // Check time overlap (minimum 30 minutes)
     const myStart = new Date(myEvent.start_time)
     const myEnd = new Date(myEvent.end_time)
@@ -360,7 +360,7 @@ export default function Dashboard({ user }: DashboardProps) {
     }
   }
 
-  const checkLocationMatch = (myEvent: Free4Event, friendEvent: any) => {
+  const checkLocationMatch = (myEvent: Free4Event, friendEvent: Free4Event) => {
     // Both online events always match
     if (myEvent.location_type === 'online' && friendEvent.location_type === 'online') {
       return { distance: 0 }
