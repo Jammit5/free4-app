@@ -28,8 +28,34 @@ gcloud builds submit --config cloudbuild.yaml
 
 echo ""
 echo "✅ Deployment completed!"
-echo "🌐 Your Free4 app is now available at:"
-gcloud run services describe free4-app --platform managed --region europe-west1 --format 'value(status.url)'
+
+# Get the Cloud Run service URL
+SERVICE_URL=$(gcloud run services describe free4-app --platform managed --region europe-west1 --format 'value(status.url)')
+echo "🔗 Cloud Run service URL: $SERVICE_URL"
+
+echo ""
+echo "🌐 Setting up custom domain mapping for free4.app..."
+
+# Create domain mapping
+gcloud run domain-mappings create \
+  --service=free4-app \
+  --domain=free4.app \
+  --region=europe-west1 \
+  --platform=managed
+
+echo ""
+echo "📋 DNS Configuration Required:"
+echo "   Add these DNS records to your free4.app domain:"
+echo ""
+gcloud run domain-mappings describe free4.app \
+  --region=europe-west1 \
+  --platform=managed \
+  --format="table(spec.routePolicy.type:label=TYPE,status.resourceRecords[].name:label=NAME,status.resourceRecords[].rrdata:label=DATA)"
+
+echo ""
+echo "✅ Domain mapping created!"
+echo "🌐 Your Free4 app will be available at: https://free4.app"
+echo "   (after DNS records are configured)"
 
 echo ""
 echo "📱 Features deployed:"
@@ -40,4 +66,4 @@ echo "   ✅ Real-time match detection"
 echo "   ✅ PWA with app icons"
 echo "   ✅ Responsive mobile design"
 echo ""
-echo "🎉 Free4 is now live and ready for users!"
+echo "🎉 Free4 is ready at https://free4.app!"

@@ -29,7 +29,7 @@ steps:
       - '--cpu'
       - '1'
       - '--set-env-vars'
-      - 'NODE_ENV=production,NEXT_PUBLIC_SUPABASE_URL=https://chkhtbqcifptqchmnelx.supabase.co,NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNoa2h0YnFjaWZwdHFjaG1uZWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3Njk1NTYsImV4cCI6MjA3MTM0NTU1Nn0.1i1avx2yn8lNQHjMpPeNOMVEPyB8nBJqYa993gj3RFo,NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=pk.eyJ1IjoiamFtbWl0IiwiYSI6ImNtZXVqY3g1NjAwbXAyanIxaWlmdzl1MXEifQ.rQKas2Jz4pdktxAihOBqEQ'
+      - 'NODE_ENV=production,NEXT_PUBLIC_SUPABASE_URL=https://chkhtbqcifptqchmnelx.supabase.co,NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNoa2h0YnFjaWZwdHFjaG1uZWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3Njk1NTYsImV4cCI6MjA3MTM0NTU1Nn0.1i1avx2yn8lNQHjMpPeNOMVEPyB8nBJqYa993gj3RFo,NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=pk.eyJ1IjoiamFtbWl0IiwiYSI6ImNtZXVqY3g1NjAwbXAyanIxaWlmdzl1MXEifQ.rQKas2Jz4pdktxAihOBqEQ,NEXT_PUBLIC_APP_URL=https://free4.app'
 
 images:
   - 'gcr.io/$PROJECT_ID/free4-app:$BUILD_ID'
