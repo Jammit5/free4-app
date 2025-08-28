@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-RUN npm ci --only=production --ignore-scripts
+RUN npm ci --ignore-scripts
 
 # Build stage
 FROM base AS builder
