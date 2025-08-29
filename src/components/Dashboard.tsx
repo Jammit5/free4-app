@@ -557,7 +557,7 @@ export default function Dashboard({ user }: DashboardProps) {
             <div className="grid gap-4">
               {events.map((event) => (
                 <div key={event.id} className="bg-white/90 backdrop-blur-sm rounded-lg p-6 shadow-sm border border-white/20 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900 text-lg">
                         Free 4 {event.title}
@@ -622,16 +622,16 @@ export default function Dashboard({ user }: DashboardProps) {
                       )}
                     </div>
                     
-                    <div className="flex space-x-2 ml-4">
+                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 sm:ml-4">
                       <button 
                         onClick={() => handleEditEvent(event)}
-                        className="bg-white border border-black rounded-lg px-3 py-1 text-gray-900 hover:bg-gray-50 text-sm shadow-md"
+                        className="bg-white border border-black rounded-lg px-3 py-1 text-gray-900 hover:bg-gray-50 text-sm shadow-md w-full sm:w-auto"
                       >
                         Bearbeiten
                       </button>
                       <button 
                         onClick={() => handleCopyEvent(event)}
-                        className="bg-white border border-black rounded-lg px-3 py-1 text-gray-900 hover:bg-gray-50 text-sm shadow-md flex items-center space-x-1"
+                        className="bg-white border border-black rounded-lg px-3 py-1 text-gray-900 hover:bg-gray-50 text-sm shadow-md flex items-center justify-center space-x-1 w-full sm:w-auto"
                         title="Free4 kopieren"
                       >
                         <Copy size={12} />
@@ -639,7 +639,7 @@ export default function Dashboard({ user }: DashboardProps) {
                       </button>
                       <button 
                         onClick={() => handleDeleteEvent(event.id)}
-                        className="bg-white border border-black rounded-lg px-3 py-1 text-gray-900 hover:bg-gray-50 text-sm shadow-md"
+                        className="bg-white border border-black rounded-lg px-3 py-1 text-gray-900 hover:bg-gray-50 text-sm shadow-md w-full sm:w-auto"
                       >
                         Löschen
                       </button>
