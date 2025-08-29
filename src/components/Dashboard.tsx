@@ -114,13 +114,44 @@ export default function Dashboard({ user }: DashboardProps) {
 
   const loadEvents = async () => {
     try {
-      const { data: events } = await supabase
+      // First, get all events to check for expired ones
+      const { data: allEvents } = await supabase
         .from('free4_events')
         .select('*')
         .eq('user_id', user.id)
-        .order('start_time', { ascending: true })
 
-      setEvents(events || [])
+      if (allEvents) {
+        const now = new Date()
+        const expiredEventIds = []
+        const activeEvents = []
+
+        // Check each event if it's completely in the past
+        for (const event of allEvents) {
+          const endTime = new Date(event.end_time)
+          if (endTime < now) {
+            // Event is completely in the past
+            expiredEventIds.push(event.id)
+          } else {
+            // Event is current or in the future
+            activeEvents.push(event)
+          }
+        }
+
+        // Delete expired events
+        if (expiredEventIds.length > 0) {
+          console.log(`Deleting ${expiredEventIds.length} expired Free4 events`)
+          await supabase
+            .from('free4_events')
+            .delete()
+            .in('id', expiredEventIds)
+        }
+
+        // Sort active events by start time
+        activeEvents.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+        setEvents(activeEvents)
+      } else {
+        setEvents([])
+      }
     } catch (error) {
       console.error('Error loading events:', error)
     } finally {
