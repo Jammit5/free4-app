@@ -29,11 +29,13 @@ interface OSMMapModalProps {
     name: string
     latitude: number
     longitude: number
+    radius?: number
   }) => void
   initialLocation?: {
     latitude: number
     longitude: number
   }
+  initialRadius?: number
 }
 
 export default function OSMMapModal({ 

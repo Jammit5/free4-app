@@ -37,13 +37,12 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
     // Set default values for new events
     const now = new Date()
     
-    // Smart date/time logic: Default to 12:00, but if it's after 11:30, use tomorrow
+    // Smart date/time logic: Default to 12:00, but if it's after 12:00, use tomorrow
     let defaultDate = now
     const currentHour = now.getHours()
-    const currentMinutes = now.getMinutes()
     
-    // If it's after 11:30 (23:30), set date to tomorrow
-    if (currentHour >= 23 || (currentHour === 23 && currentMinutes >= 30)) {
+    // If it's after 12:00 (noon), set date to tomorrow
+    if (currentHour >= 12) {
       defaultDate = new Date(now.getTime() + 24 * 60 * 60 * 1000) // Add 1 day
     }
     
@@ -204,10 +203,14 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
     latitude: number
     longitude: number
     place_id?: string
+    radius?: number
   }) => {
     setLocationName(location.name)
     setLatitude(location.latitude)
     setLongitude(location.longitude)
+    if (location.radius !== undefined) {
+      setRadiusKm(location.radius)
+    }
   }
 
   const handleOpenMap = () => {
@@ -410,27 +413,6 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
             )}
           </div>
 
-          {/* Radius for physical locations */}
-          {locationType === 'physical' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Maximaler Radius (km)
-              </label>
-              <select
-                value={radiusKm}
-                onChange={(e) => setRadiusKm(parseInt(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              >
-                <option value={0.1}>Nur hier (100m)</option>
-                <option value={1}>1 km</option>
-                <option value={2}>2 km</option>
-                <option value={5}>5 km</option>
-                <option value={10}>10 km</option>
-                <option value={20}>20 km (ganze Stadt)</option>
-                <option value={50}>50 km (weiter Umkreis)</option>
-              </select>
-            </div>
-          )}
 
           {/* Visibility */}
           <div>
@@ -480,6 +462,7 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
         onClose={() => setShowMapsModal(false)}
         onLocationSelect={handleLocationSelect}
         initialLocation={latitude && longitude ? { latitude, longitude } : undefined}
+        initialRadius={radiusKm}
       />
     </div>
   )
