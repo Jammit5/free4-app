@@ -1,6 +1,6 @@
 <?php
 // CORS Headers für Next.js App
-header('Access-Control-Allow-Origin: https://free4.app'); // Deine Domain
+header('Access-Control-Allow-Origin: *'); // Alle Domains erlauben (temporär zum Testen)
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 header('Content-Type: application/json');

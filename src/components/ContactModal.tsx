@@ -28,8 +28,8 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
     setSubmitMessage('')
 
     try {
-      // PHP-Endpoint auf IONOS verwenden
-      const response = await fetch('https://free4.app/contact.php', {
+      // Next.js API Route verwenden (läuft auf Vercel)
+      const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,0 +1,12 @@
+# CORS Headers für contact.php
+<Files "contact.php">
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "POST, GET, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type"
+</Files>
+
+# PHP-Dateien erlauben
+<FilesMatch "\.php$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
