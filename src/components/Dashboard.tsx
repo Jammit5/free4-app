@@ -897,6 +897,7 @@ export default function Dashboard({ user }: DashboardProps) {
       <ImpressumModal 
         isOpen={showImpressum}
         onClose={() => setShowImpressum(false)}
+        onOpenContact={() => setShowContact(true)}
       />
       <ContactModal 
         isOpen={showContact}

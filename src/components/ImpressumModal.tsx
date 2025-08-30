@@ -1,13 +1,14 @@
 'use client'
 
-import { X, FileText } from 'lucide-react'
+import { X, FileText, Mail } from 'lucide-react'
 
 interface ImpressumModalProps {
   isOpen: boolean
   onClose: () => void
+  onOpenContact?: () => void
 }
 
-export default function ImpressumModal({ isOpen, onClose }: ImpressumModalProps) {
+export default function ImpressumModal({ isOpen, onClose, onOpenContact }: ImpressumModalProps) {
   if (!isOpen) return null
 
   return (
@@ -57,8 +58,22 @@ export default function ImpressumModal({ isOpen, onClose }: ImpressumModalProps)
                   Kontakt
                 </h3>
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <div className="text-gray-600">
+                  <div className="text-gray-600 space-y-3">
                     <p><strong>E-Mail:</strong> jammit@gmail.com</p>
+                    {onOpenContact && (
+                      <div>
+                        <button
+                          onClick={() => {
+                            onClose()
+                            onOpenContact()
+                          }}
+                          className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md text-sm font-medium"
+                        >
+                          <Mail size={16} className="mr-2" />
+                          Kontaktformular öffnen
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

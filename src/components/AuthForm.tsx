@@ -280,6 +280,7 @@ export default function AuthForm() {
       <ImpressumModal 
         isOpen={showImpressum}
         onClose={() => setShowImpressum(false)}
+        onOpenContact={() => setShowContact(true)}
       />
       <ContactModal 
         isOpen={showContact}
