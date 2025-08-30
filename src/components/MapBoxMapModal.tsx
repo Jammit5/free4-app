@@ -349,10 +349,10 @@ export default function MapBoxMapModal({
               </div>
             )}
 
-            {/* Selected Location Info with inline buttons */}
+            {/* Selected Location Info with inline button */}
             {selectedLocation && (
-              <div className="mt-4 flex items-start gap-4">
-                <div className="flex-1 max-w-md p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="mt-4 flex items-stretch gap-4">
+                <div className="flex-1 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex items-center">
                     <MapPin size={16} className="text-blue-600 mr-2" />
                     <span className="text-sm font-medium text-blue-800">
@@ -364,34 +364,14 @@ export default function MapBoxMapModal({
                   </p>
                 </div>
                 
-                {/* Action Buttons */}
-                <div className="flex space-x-3">
-                  <button
-                    onClick={onClose}
-                    className="px-4 py-2 text-gray-900 bg-white border border-black rounded-md hover:bg-gray-50 shadow-md"
-                  >
-                    Abbrechen
-                  </button>
-                  <button
-                    onClick={handleConfirm}
-                    disabled={!selectedLocation}
-                    className="px-4 py-2 bg-white border border-black text-gray-900 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-md"
-                  >
-                    <Check size={16} className="mr-2" />
-                    Ort verwenden
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Fallback action buttons when no location selected */}
-            {!selectedLocation && (
-              <div className="flex justify-end space-x-3 mt-6">
+                {/* Use Location Button */}
                 <button
-                  onClick={onClose}
-                  className="px-4 py-2 text-gray-900 bg-white border border-black rounded-md hover:bg-gray-50 shadow-md"
+                  onClick={handleConfirm}
+                  disabled={!selectedLocation}
+                  className="flex-1 px-4 py-2 bg-white border border-black text-gray-900 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-md"
                 >
-                  Abbrechen
+                  <Check size={16} className="mr-2" />
+                  Ort verwenden
                 </button>
               </div>
             )}

@@ -25,6 +25,8 @@ export default function Dashboard({ user }: DashboardProps) {
   const [eventMatches, setEventMatches] = useState<any>({})
   const [selectedMatch, setSelectedMatch] = useState<any>(null)
   const [isRefreshingMatches, setIsRefreshingMatches] = useState(false)
+  const [showDeleteToast, setShowDeleteToast] = useState(false)
+  const [deletedEventTitle, setDeletedEventTitle] = useState('')
   const matchCheckInterval = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
@@ -165,6 +167,10 @@ export default function Dashboard({ user }: DashboardProps) {
 
   const handleDeleteEvent = async (eventId: string) => {
     try {
+      // Find the event title before deleting
+      const eventToDelete = events.find(event => event.id === eventId)
+      const eventTitle = eventToDelete?.title || 'Free4'
+
       const { error } = await supabase
         .from('free4_events')
         .delete()
@@ -174,6 +180,15 @@ export default function Dashboard({ user }: DashboardProps) {
 
       // Remove from local state
       setEvents(events.filter(event => event.id !== eventId))
+      
+      // Show delete toast
+      setDeletedEventTitle(eventTitle)
+      setShowDeleteToast(true)
+      
+      // Hide toast after 2 seconds with 0.5s fade animation
+      setTimeout(() => {
+        setShowDeleteToast(false)
+      }, 2000)
     } catch (error: any) {
       console.error('Error deleting free4:', error)
     }
@@ -796,6 +811,35 @@ export default function Dashboard({ user }: DashboardProps) {
           </div>
         </div>
       )}
+
+      {/* Delete Toast */}
+      {showDeleteToast && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <div 
+            className={`bg-white border border-black rounded-lg shadow-lg px-6 py-4 transition-opacity duration-500 ${
+              showDeleteToast ? 'opacity-100' : 'opacity-0'
+            }`}
+            style={{
+              animation: showDeleteToast 
+                ? 'fadeInOut 2.5s ease-in-out forwards' 
+                : 'none'
+            }}
+          >
+            <p className="text-gray-900 font-medium">
+              Free 4 {deletedEventTitle} wurde gelöscht!
+            </p>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes fadeInOut {
+          0% { opacity: 0; transform: translateY(-10px); }
+          20% { opacity: 1; transform: translateY(0); }
+          80% { opacity: 1; transform: translateY(0); }
+          100% { opacity: 0; transform: translateY(-10px); }
+        }
+      `}</style>
     </div>
   )
 }

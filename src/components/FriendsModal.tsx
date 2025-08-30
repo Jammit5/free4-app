@@ -294,13 +294,13 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
                     <div className="flex space-x-2">
                       <button
                         onClick={() => respondToRequest(request.id, true)}
-                        className="px-3 py-1 bg-white border border-black text-gray-900 shadow-md rounded-md hover:bg-gray-50 text-sm"
+                        className="px-4 py-2 bg-white border border-black text-gray-900 shadow-md rounded-md hover:bg-gray-50 text-sm"
                       >
                         Annehmen
                       </button>
                       <button
                         onClick={() => respondToRequest(request.id, false)}
-                        className="px-3 py-1 bg-white border border-black text-gray-900 shadow-md rounded-md hover:bg-gray-50 text-sm"
+                        className="px-4 py-2 bg-white border border-black text-gray-900 shadow-md rounded-md hover:bg-gray-50 text-sm"
                       >
                         Ablehnen
                       </button>
@@ -338,7 +338,7 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
                       </div>
                       <button
                         onClick={() => removeFriend(friend.id)}
-                        className={`px-3 py-1 border border-black shadow-md rounded-md text-sm ${
+                        className={`px-4 py-2 border border-black shadow-md rounded-md text-sm ${
                           removeConfirmId === friend.id 
                             ? 'bg-red-500 text-white hover:bg-red-600'
                             : 'bg-white text-gray-900 hover:bg-gray-50'
@@ -357,13 +357,13 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
                         <div className="flex space-x-2">
                           <button
                             onClick={() => setRemoveConfirmId(null)}
-                            className="px-3 py-1 bg-white border border-black text-gray-900 shadow-md rounded-md hover:bg-gray-50 text-sm"
+                            className="px-4 py-2 bg-white border border-black text-gray-900 shadow-md rounded-md hover:bg-gray-50 text-sm"
                           >
                             Abbrechen
                           </button>
                           <button
                             onClick={() => removeFriend(friend.id)}
-                            className="px-3 py-1 bg-red-500 border border-red-600 text-white shadow-md rounded-md hover:bg-red-600 text-sm"
+                            className="px-4 py-2 bg-red-500 border border-red-600 text-white shadow-md rounded-md hover:bg-red-600 text-sm"
                           >
                             Ja, beenden
                           </button>
