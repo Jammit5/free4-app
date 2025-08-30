@@ -10,6 +10,7 @@ import FriendsModal from './FriendsModal'
 import ProfileModal from './ProfileModal'
 import ImpressumModal from './ImpressumModal'
 import ContactModal from './ContactModal'
+import DataPrivacyModal from './DataPrivacyModal'
 
 interface DashboardProps {
   user: User
@@ -31,6 +32,7 @@ export default function Dashboard({ user }: DashboardProps) {
   const [deletedEventTitle, setDeletedEventTitle] = useState('')
   const [showImpressum, setShowImpressum] = useState(false)
   const [showContact, setShowContact] = useState(false)
+  const [showDataPrivacy, setShowDataPrivacy] = useState(false)
   const matchCheckInterval = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
@@ -888,6 +890,12 @@ export default function Dashboard({ user }: DashboardProps) {
               >
                 Kontakt
               </button>
+              <button
+                onClick={() => setShowDataPrivacy(true)}
+                className="text-sm text-white/80 hover:text-white underline"
+              >
+                Datenschutz
+              </button>
             </div>
           </div>
         </div>
@@ -902,6 +910,11 @@ export default function Dashboard({ user }: DashboardProps) {
       <ContactModal 
         isOpen={showContact}
         onClose={() => setShowContact(false)}
+      />
+      <DataPrivacyModal 
+        isOpen={showDataPrivacy}
+        onClose={() => setShowDataPrivacy(false)}
+        onOpenContact={() => setShowContact(true)}
       />
 
       <style jsx>{`

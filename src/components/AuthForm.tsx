@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import ImpressumModal from './ImpressumModal'
 import ContactModal from './ContactModal'
+import DataPrivacyModal from './DataPrivacyModal'
 
 export default function AuthForm() {
   const [email, setEmail] = useState('')
@@ -17,6 +18,7 @@ export default function AuthForm() {
   const [showNameTooltip, setShowNameTooltip] = useState(false)
   const [showImpressum, setShowImpressum] = useState(false)
   const [showContact, setShowContact] = useState(false)
+  const [showDataPrivacy, setShowDataPrivacy] = useState(false)
 
   const handleGoogleAuth = async () => {
     setGoogleLoading(true)
@@ -272,6 +274,12 @@ export default function AuthForm() {
             >
               Kontakt
             </button>
+            <button
+              onClick={() => setShowDataPrivacy(true)}
+              className="text-sm text-white/80 hover:text-white underline"
+            >
+              Datenschutz
+            </button>
           </div>
         </div>
       </div>
@@ -285,6 +293,11 @@ export default function AuthForm() {
       <ContactModal 
         isOpen={showContact}
         onClose={() => setShowContact(false)}
+      />
+      <DataPrivacyModal 
+        isOpen={showDataPrivacy}
+        onClose={() => setShowDataPrivacy(false)}
+        onOpenContact={() => setShowContact(true)}
       />
     </div>
   )
