@@ -28,7 +28,8 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
     setSubmitMessage('')
 
     try {
-      const response = await fetch('/api/contact', {
+      // PHP-Endpoint auf IONOS verwenden
+      const response = await fetch('https://free4.app/contact.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
