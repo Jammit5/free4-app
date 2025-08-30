@@ -36,6 +36,7 @@ interface OSMMapModalProps {
     longitude: number
     radius?: number
   }
+  initialRadius?: number
 }
 
 export default function OSMMapModal({ 

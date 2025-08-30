@@ -36,13 +36,12 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
     // Set default values for new events
     const now = new Date()
     
-    // Smart date/time logic: Default to 12:00, but if it's after 11:30, use tomorrow
+    // Smart date/time logic: Default to 12:00, but if it's after 12:00, use tomorrow
     let defaultDate = now
     const currentHour = now.getHours()
-    const currentMinutes = now.getMinutes()
     
-    // If it's after 11:30 (23:30), set date to tomorrow
-    if (currentHour >= 23 || (currentHour === 23 && currentMinutes >= 30)) {
+    // If it's after 12:00 (noon), set date to tomorrow
+    if (currentHour >= 12) {
       defaultDate = new Date(now.getTime() + 24 * 60 * 60 * 1000) // Add 1 day
     }
     
