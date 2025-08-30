@@ -36,13 +36,13 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        alert('Bitte nur Bilddateien hochladen!')
+        console.error('Invalid file type')
         return
       }
       
       // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
-        alert('Bild ist zu groß! Maximale Größe: 2MB')
+        console.error('File too large')
         return
       }
 
@@ -105,10 +105,10 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
 
       onProfileUpdated()
       setAvatarFile(null)
-      alert('Profil erfolgreich aktualisiert!')
+      console.log('Profil erfolgreich aktualisiert!')
     } catch (error: any) {
       console.error('Error updating profile:', error)
-      alert('Fehler beim Aktualisieren des Profils: ' + error.message)
+      console.log('Fehler beim Aktualisieren des Profils: ' + error.message)
     } finally {
       setLoading(false)
     }
@@ -130,10 +130,10 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
       if (error) throw error
 
       onProfileUpdated()
-      alert('Name erfolgreich geändert! Dies war deine einmalige Namensänderung.')
+      console.log('Name erfolgreich geändert! Dies war deine einmalige Namensänderung.')
     } catch (error: any) {
       console.error('Error changing name:', error)
-      alert('Fehler beim Ändern des Namens: ' + error.message)
+      console.log('Fehler beim Ändern des Namens: ' + error.message)
     } finally {
       setNameChangeLoading(false)
     }
@@ -141,7 +141,7 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmText !== 'DELETE') {
-      alert('Bitte tippe "DELETE" um zu bestätigen')
+      console.log('Bitte tippe "DELETE" um zu bestätigen')
       return
     }
 
@@ -169,11 +169,11 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
       const { error } = await supabase.auth.admin.deleteUser(currentUser.id)
       if (error) throw error
 
-      alert('Account wurde gelöscht.')
+      console.log('Account wurde gelöscht.')
       window.location.reload()
     } catch (error: any) {
       console.error('Error deleting account:', error)
-      alert('Fehler beim Löschen des Accounts: ' + error.message)
+      console.log('Fehler beim Löschen des Accounts: ' + error.message)
     } finally {
       setLoading(false)
     }
@@ -182,17 +182,29 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
   if (!isOpen || !profile) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-xl font-bold text-gray-900 flex items-center">
-            <User size={20} className="mr-2" />
+    <div className="fixed inset-0 z-50" style={{
+      background: 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)'
+    }}>
+      {/* Header */}
+      <header className="bg-white/90 backdrop-blur-sm shadow-sm border-b border-white/20">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+            <User size={24} className="mr-2" />
             Mein Profil
           </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X size={24} />
+          <button 
+            onClick={onClose} 
+            className="p-2 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
+            title="Zurück"
+          >
+            <X size={20} />
           </button>
         </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-4xl mx-auto px-4 py-8 overflow-y-auto" style={{ height: 'calc(100vh - 80px)' }}>
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm border border-white/20">
 
         <div className="p-6 space-y-6">
           {/* Avatar Section */}
@@ -241,7 +253,7 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 disabled={!canChangeName}
-                className={`flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 ${
+                className={`flex-1 px-3 py-2 border border-white/20 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 ${
                   !canChangeName ? 'bg-gray-100 cursor-not-allowed' : ''
                 }`}
               />
@@ -270,7 +282,7 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
               type="email"
               value={profile.email}
               disabled
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
+              className="w-full px-3 py-2 border border-white/20 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
             />
           </div>
 
@@ -291,7 +303,7 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
           </button>
 
           {/* Delete Account Section */}
-          <div className="border-t pt-6">
+          <div className="border-t border-white/20 pt-6">
             <h3 className="text-lg font-semibold text-red-600 mb-4 flex items-center">
               <AlertTriangle size={20} className="mr-2" />
               Danger Zone
@@ -342,7 +354,8 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
             )}
           </div>
         </div>
-      </div>
+        </div>
+      </main>
     </div>
   )
 }

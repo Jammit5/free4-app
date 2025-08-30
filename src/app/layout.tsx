@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Free4 - Spontane Meetups mit Freunden",
+  title: "Free4 - Spontane Treffen mit Freunden",
   description: "Zeig deinen Freunden wann du Zeit hast und entdecke spontane Möglichkeiten euch zu treffen",
   manifest: "/manifest.json",
 };

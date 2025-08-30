@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import SimpleMapBoxModal from './SimpleMapBoxModal'
+import MapBoxMapModal from './MapBoxMapModal'
 import OSMMapModal from './OSMMapModal'
 
 interface SmartMapModalProps {
@@ -11,10 +11,12 @@ interface SmartMapModalProps {
     name: string
     latitude: number
     longitude: number
+    radius: number
   }) => void
   initialLocation?: {
     latitude: number
     longitude: number
+    radius?: number
   }
 }
 
@@ -24,13 +26,16 @@ export default function SmartMapModal(props: SmartMapModalProps) {
   useEffect(() => {
     // Check if MapBox token is configured
     const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
+    console.log('SmartMapModal - MapBox Token:', mapboxToken)
+    console.log('SmartMapModal - Token length:', mapboxToken?.length)
     const hasValidMapBoxToken = mapboxToken && mapboxToken !== 'pk.your_mapbox_token_here'
+    console.log('SmartMapModal - Using MapBox:', hasValidMapBoxToken)
     setUseMapBox(!!hasValidMapBoxToken)
   }, [])
 
   // Use MapBox if token is available, otherwise fallback to OSM
   return useMapBox ? (
-    <SimpleMapBoxModal {...props} />
+    <MapBoxMapModal {...props} />
   ) : (
     <OSMMapModal {...props} />
   )

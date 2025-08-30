@@ -29,10 +29,12 @@ interface OSMMapModalProps {
     name: string
     latitude: number
     longitude: number
+    radius: number
   }) => void
   initialLocation?: {
     latitude: number
     longitude: number
+    radius?: number
   }
 }
 
@@ -101,7 +103,8 @@ export default function OSMMapModal({
       onLocationSelect({
         name: selectedLocation.name,
         latitude: selectedLocation.latitude,
-        longitude: selectedLocation.longitude
+        longitude: selectedLocation.longitude,
+        radius: 1.0 // Default 1km for OSM fallback
       })
       onClose()
     }

@@ -19,6 +19,7 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
   const [friends, setFriends] = useState<(Friendship & { profile: Profile })[]>([])
   const [pendingRequests, setPendingRequests] = useState<(Friendship & { profile: Profile })[]>([])
   const [loading, setLoading] = useState(true)
+  const [removeConfirmId, setRemoveConfirmId] = useState<string | null>(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -133,7 +134,7 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
       setSearchResult(prev => prev ? { ...prev, friendship_status: 'pending', is_requester: true } : null)
     } catch (error: any) {
       console.error('Error sending friend request:', error)
-      alert('Fehler beim Senden der Freundschaftsanfrage: ' + error.message)
+      console.error('Error sending friend request:', error.message)
     }
   }
 
@@ -152,12 +153,15 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
       onRequestsUpdated?.()
     } catch (error: any) {
       console.error('Error responding to request:', error)
-      alert('Fehler beim Antworten auf Freundschaftsanfrage: ' + error.message)
+      console.error('Error responding to friend request:', error.message)
     }
   }
 
   const removeFriend = async (friendshipId: string) => {
-    if (!confirm('Freundschaft wirklich beenden?')) return
+    if (removeConfirmId !== friendshipId) {
+      setRemoveConfirmId(friendshipId)
+      return
+    }
 
     try {
       const { error } = await supabase
@@ -169,27 +173,40 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
 
       // Remove from local state immediately
       setFriends(friends.filter(friend => friend.id !== friendshipId))
+      setRemoveConfirmId(null)
       onRequestsUpdated?.()
     } catch (error: any) {
       console.error('Error removing friend:', error)
-      alert('Fehler beim Entfernen des Freundes: ' + error.message)
+      // Error will be shown in UI instead of alert
     }
   }
 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-xl font-bold text-gray-900 flex items-center">
-            <Users size={20} className="mr-2" />
+    <div className="fixed inset-0 z-50" style={{
+      background: 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)'
+    }}>
+      {/* Header */}
+      <header className="bg-white/90 backdrop-blur-sm shadow-sm border-b border-white/20">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+            <Users size={24} className="mr-2" />
             Freunde
           </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X size={24} />
+          <button 
+            onClick={onClose} 
+            className="p-2 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
+            title="Zurück"
+          >
+            <X size={20} />
           </button>
         </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-4xl mx-auto px-4 py-8 overflow-y-auto" style={{ height: 'calc(100vh - 80px)' }}>
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm border border-white/20">
 
         <div className="p-6 space-y-6">
           {/* Add Friend Section */}
@@ -205,7 +222,7 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
                 onChange={(e) => setSearchEmail(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && searchUser()}
                 placeholder="Email-Adresse eingeben..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
+                className="flex-1 px-3 py-2 border border-white/20 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
               />
               <button
                 onClick={searchUser}
@@ -218,7 +235,7 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
 
             {/* Search Result */}
             {searchResult && (
-              <div className="p-4 border rounded-lg">
+              <div className="p-4 border border-white/20 rounded-lg">
                 {searchResult.not_found ? (
                   <div className="flex items-center text-gray-600">
                     <Mail size={16} className="mr-2" />
@@ -266,7 +283,7 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
               <h3 className="text-lg font-semibold text-gray-900">Offene Anfragen</h3>
               <div className="space-y-3">
                 {pendingRequests.map((request) => (
-                  <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={request.id} className="flex items-center justify-between p-4 border border-white/20 rounded-lg">
                     <div className="flex items-center">
                       <Mail size={16} className="mr-2 text-gray-600" />
                       <div>
@@ -310,27 +327,57 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
             ) : (
               <div className="space-y-3">
                 {friends.map((friend) => (
-                  <div key={friend.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center">
-                      <Mail size={16} className="mr-2 text-gray-600" />
-                      <div>
-                        <p className="font-medium text-gray-900">{friend.profile.full_name}</p>
-                        <p className="text-sm text-gray-600">{friend.profile.email}</p>
+                  <div key={friend.id} className="p-4 border border-white/20 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Mail size={16} className="mr-2 text-gray-600" />
+                        <div>
+                          <p className="font-medium text-gray-900">{friend.profile.full_name}</p>
+                          <p className="text-sm text-gray-600">{friend.profile.email}</p>
+                        </div>
                       </div>
+                      <button
+                        onClick={() => removeFriend(friend.id)}
+                        className={`px-3 py-1 border border-black shadow-md rounded-md text-sm ${
+                          removeConfirmId === friend.id 
+                            ? 'bg-red-500 text-white hover:bg-red-600'
+                            : 'bg-white text-gray-900 hover:bg-gray-50'
+                        }`}
+                      >
+                        {removeConfirmId === friend.id ? 'Wirklich entfernen?' : 'Entfernen'}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => removeFriend(friend.id)}
-                      className="px-3 py-1 bg-white border border-black text-gray-900 shadow-md rounded-md hover:bg-gray-50 text-sm"
-                    >
-                      Entfernen
-                    </button>
+                    
+                    {/* Remove confirmation message */}
+                    {removeConfirmId === friend.id && (
+                      <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <p className="text-sm text-amber-800 mb-2">
+                          Freundschaft mit {friend.profile.full_name} wirklich beenden?
+                        </p>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => setRemoveConfirmId(null)}
+                            className="px-3 py-1 bg-white border border-black text-gray-900 shadow-md rounded-md hover:bg-gray-50 text-sm"
+                          >
+                            Abbrechen
+                          </button>
+                          <button
+                            onClick={() => removeFriend(friend.id)}
+                            className="px-3 py-1 bg-red-500 border border-red-600 text-white shadow-md rounded-md hover:bg-red-600 text-sm"
+                          >
+                            Ja, beenden
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             )}
           </div>
         </div>
-      </div>
+        </div>
+      </main>
     </div>
   )
 }

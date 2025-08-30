@@ -129,10 +129,10 @@ export default function Dashboard({ user }: DashboardProps) {
         for (const event of allEvents) {
           const endTime = new Date(event.end_time)
           if (endTime < now) {
-            // Event is completely in the past
+            // Free4 is completely in the past
             expiredEventIds.push(event.id)
           } else {
-            // Event is current or in the future
+            // Free4 is current or in the future
             activeEvents.push(event)
           }
         }
@@ -164,8 +164,6 @@ export default function Dashboard({ user }: DashboardProps) {
   }
 
   const handleDeleteEvent = async (eventId: string) => {
-    if (!confirm('Möchtest du dieses Event wirklich löschen?')) return
-
     try {
       const { error } = await supabase
         .from('free4_events')
@@ -177,8 +175,7 @@ export default function Dashboard({ user }: DashboardProps) {
       // Remove from local state
       setEvents(events.filter(event => event.id !== eventId))
     } catch (error: any) {
-      console.error('Error deleting event:', error)
-      alert('Fehler beim Löschen: ' + error.message)
+      console.error('Error deleting free4:', error)
     }
   }
 
@@ -556,7 +553,7 @@ export default function Dashboard({ user }: DashboardProps) {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* Create New Event Button */}
+        {/* Create New Free4 Button */}
         <div className="mb-8">
           <button 
             onClick={() => setShowCreateModal(true)}
@@ -683,7 +680,7 @@ export default function Dashboard({ user }: DashboardProps) {
         </div>
       </main>
 
-      {/* Create Event Modal */}
+      {/* Create Free4 Modal */}
       <CreateEventModal 
         isOpen={showCreateModal}
         onClose={handleCloseModal}

@@ -19,8 +19,7 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
   const [customTitle, setCustomTitle] = useState('')
   const [description, setDescription] = useState('')
   const [startDate, setStartDate] = useState('')
-  const [startHour, setStartHour] = useState('')
-  const [startMinute, setStartMinute] = useState('00')
+  const [startTime, setStartTime] = useState('12:00')
   const [duration, setDuration] = useState(60) // minutes
   const [locationType, setLocationType] = useState<'physical' | 'online'>('physical')
   const [locationName, setLocationName] = useState('')
@@ -48,14 +47,11 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
     }
     
     const defaultDateString = defaultDate.toISOString().split('T')[0]
-    const defaultHour = '12' // Always 12:00
-    
     setTitle('')
     setCustomTitle('')
     setDescription('')
     setStartDate(defaultDateString)
-    setStartHour(defaultHour)
-    setStartMinute('00')
+    setStartTime('12:00')
     setDuration(60)
     setLocationType('physical')
     setLocationName('')
@@ -76,12 +72,12 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
         
         const startDateTime = new Date(editEvent.start_time)
         setStartDate(startDateTime.toISOString().split('T')[0])
-        setStartHour(startDateTime.getHours().toString().padStart(2, '0'))
-        
         // Round to nearest 15-minute interval for editing
+        const hours = startDateTime.getHours()
         const minutes = startDateTime.getMinutes()
         const roundedMinutes = Math.round(minutes / 15) * 15
-        setStartMinute(roundedMinutes.toString().padStart(2, '0'))
+        const formattedTime = `${hours.toString().padStart(2, '0')}:${roundedMinutes.toString().padStart(2, '0')}`
+        setStartTime(formattedTime)
         
         const endDateTime = new Date(editEvent.end_time)
         const durationMs = endDateTime.getTime() - startDateTime.getTime()
@@ -109,7 +105,7 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
       if (!user) throw new Error('Not authenticated')
 
       // Calculate end time
-      const startDateTime = new Date(`${startDate}T${startHour}:${startMinute}`)
+      const startDateTime = new Date(`${startDate}T${startTime}`)
       const endDateTime = new Date(startDateTime.getTime() + duration * 60 * 1000)
 
       // Validate that event is not in the past (only for new events)
@@ -121,12 +117,11 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
       if (editEvent && editEvent.id === '') {
         const originalStart = new Date(editEvent.start_time)
         const originalStartDate = originalStart.toISOString().split('T')[0]
-        const originalStartHour = originalStart.getHours().toString().padStart(2, '0')
-        const originalStartMinute = originalStart.getMinutes().toString().padStart(2, '0')
+        const originalHours = originalStart.getHours()
+        const originalMinutes = originalStart.getMinutes()
+        const originalTime = `${originalHours.toString().padStart(2, '0')}:${originalMinutes.toString().padStart(2, '0')}`
         
-        const isDateTimeUnchanged = startDate === originalStartDate && 
-                                   startHour === originalStartHour && 
-                                   startMinute === originalStartMinute
+        const isDateTimeUnchanged = startDate === originalStartDate && startTime === originalTime
         
         if (isDateTimeUnchanged) {
           throw new Error('Bitte ändere das Datum oder die Uhrzeit für den kopierten Free4!')
@@ -165,7 +160,7 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
         location_name: locationName || null,
         latitude: latitude,
         longitude: longitude,
-        radius_km: locationType === 'physical' ? radiusKm : null,
+        radius_km: locationType === 'physical' ? (radiusKm === 0.1 ? 0 : Math.round(radiusKm)) : null,
         visibility,
       }
 
@@ -193,7 +188,7 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
       onClose()
     } catch (error: any) {
       console.error('Error creating event:', error)
-      alert('Fehler beim Erstellen des Events: ' + error.message)
+      console.error('Error creating Free4:', error.message)
     } finally {
       setLoading(false)
     }
@@ -204,10 +199,14 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
     latitude: number
     longitude: number
     place_id?: string
+    radius?: number
   }) => {
     setLocationName(location.name)
     setLatitude(location.latitude)
     setLongitude(location.longitude)
+    if (location.radius !== undefined) {
+      setRadiusKm(location.radius)
+    }
   }
 
   const handleOpenMap = () => {
@@ -217,16 +216,28 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-xl font-bold text-gray-900">
+    <div className="fixed inset-0 z-50" style={{
+      background: 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)'
+    }}>
+      {/* Header */}
+      <header className="bg-white/90 backdrop-blur-sm shadow-sm border-b border-white/20">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900">
             {editEvent ? 'Free4 bearbeiten' : 'Free 4 ...'}
           </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X size={24} />
+          <button 
+            onClick={onClose} 
+            className="p-2 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
+            title="Zurück"
+          >
+            <X size={20} />
           </button>
         </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-4xl mx-auto px-4 py-8 overflow-y-auto" style={{ height: 'calc(100vh - 80px)' }}>
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm border border-black">
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Title Selection */}
@@ -268,7 +279,7 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
                 placeholder="Eigenen Titel eingeben..."
                 value={customTitle}
                 onChange={(e) => setCustomTitle(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
+                className="w-full px-3 py-2 border border-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                 required
               />
             )}
@@ -283,7 +294,7 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="z.B. 'Mit der Family' oder 'Lust auf Rocket League?'"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
+              className="w-full px-3 py-2 border border-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
               rows={2}
             />
           </div>
@@ -300,27 +311,30 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 min={editEvent ? undefined : new Date().toISOString().split('T')[0]}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                className="w-full px-3 py-2 border border-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 required
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Stunde
+                  Uhrzeit
                 </label>
                 <select
-                  value={startHour}
-                  onChange={(e) => setStartHour(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="w-full px-3 py-2 border border-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   required
                 >
-                  <option value="">Stunde wählen</option>
-                  {Array.from({ length: 24 }, (_, i) => {
-                    const hour = i.toString().padStart(2, '0')
+                  <option value="">Uhrzeit wählen</option>
+                  {Array.from({ length: 24 * 4 }, (_, i) => {
+                    const totalMinutes = i * 15
+                    const hours = Math.floor(totalMinutes / 60)
+                    const minutes = totalMinutes % 60
+                    const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
                     return (
-                      <option key={hour} value={hour}>
-                        {hour}:00
+                      <option key={timeString} value={timeString}>
+                        {timeString}
                       </option>
                     )
                   })}
@@ -328,41 +342,23 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Minute
+                  Dauer
                 </label>
                 <select
-                  value={startMinute}
-                  onChange={(e) => setStartMinute(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  required
+                  value={duration}
+                  onChange={(e) => setDuration(parseInt(e.target.value))}
+                  className="w-full px-3 py-2 border border-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 >
-                  <option value="00">:00</option>
-                  <option value="15">:15</option>
-                  <option value="30">:30</option>
-                  <option value="45">:45</option>
+                  <option value={30}>30 Min</option>
+                  <option value={60}>1 Std</option>
+                  <option value={90}>1,5 Std</option>
+                  <option value={120}>2 Std</option>
+                  <option value={180}>3 Std</option>
+                  <option value={240}>4 Std</option>
+                  <option value={480}>8 Std</option>
                 </select>
               </div>
             </div>
-          </div>
-
-          {/* Duration */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Dauer
-            </label>
-            <select
-              value={duration}
-              onChange={(e) => setDuration(parseInt(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-            >
-              <option value={30}>30 Minuten</option>
-              <option value={60}>1 Stunde</option>
-              <option value={90}>1,5 Stunden</option>
-              <option value={120}>2 Stunden</option>
-              <option value={180}>3 Stunden</option>
-              <option value={240}>4 Stunden</option>
-              <option value={480}>8 Stunden</option>
-            </select>
           </div>
 
           {/* Location Type */}
@@ -410,27 +406,6 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
             )}
           </div>
 
-          {/* Radius for physical locations */}
-          {locationType === 'physical' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Maximaler Radius (km)
-              </label>
-              <select
-                value={radiusKm}
-                onChange={(e) => setRadiusKm(parseInt(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              >
-                <option value={0.1}>Nur hier (100m)</option>
-                <option value={1}>1 km</option>
-                <option value={2}>2 km</option>
-                <option value={5}>5 km</option>
-                <option value={10}>10 km</option>
-                <option value={20}>20 km (ganze Stadt)</option>
-                <option value={50}>50 km (weiter Umkreis)</option>
-              </select>
-            </div>
-          )}
 
           {/* Visibility */}
           <div>
@@ -441,7 +416,7 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
             <select
               value={visibility}
               onChange={(e) => setVisibility(e.target.value as any)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              className="w-full px-3 py-2 border border-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
             >
               <option value="all_friends">Alle Freunde</option>
               <option value="overlap_only">Nur bei Überschneidung anzeigen</option>
@@ -462,7 +437,7 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
             </button>
             <button
               type="submit"
-              disabled={loading || !title || (title === 'custom' && !customTitle) || !startHour || !startDate || (locationType === 'physical' && !locationName)}
+              disabled={loading || !title || (title === 'custom' && !customTitle) || !startTime || !startDate || (locationType === 'physical' && !locationName)}
               className="px-6 py-2 bg-white border border-black text-gray-900 rounded-lg hover:bg-gray-50 disabled:opacity-50 shadow-md"
             >
               {loading 
@@ -472,14 +447,15 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
             </button>
           </div>
         </form>
-      </div>
+        </div>
+      </main>
       
       {/* Smart Map Modal (MapBox or OSM) */}
       <SmartMapModal
         isOpen={showMapsModal}
         onClose={() => setShowMapsModal(false)}
         onLocationSelect={handleLocationSelect}
-        initialLocation={latitude && longitude ? { latitude, longitude } : undefined}
+        initialLocation={latitude && longitude ? { latitude, longitude, radius: radiusKm } : undefined}
       />
     </div>
   )

@@ -269,7 +269,7 @@ export default function MatchesModal({ isOpen, onClose, currentUser }: MatchesMo
               {matches.map((match, index) => (
                 <div key={index} className="bg-gradient-to-r from-pink-50 to-blue-50 rounded-lg p-6 border border-pink-200">
                   <div className="grid md:grid-cols-2 gap-6">
-                    {/* My Event */}
+                    {/* My Free4 */}
                     <div className="bg-white rounded-lg p-4 border-l-4 border-l-blue-500">
                       <div className="flex items-center mb-3">
                         <User size={16} className="mr-2 text-blue-600" />
@@ -299,7 +299,7 @@ export default function MatchesModal({ isOpen, onClose, currentUser }: MatchesMo
                       </div>
                     </div>
 
-                    {/* Friend Event */}
+                    {/* Friend Free4 */}
                     <div className="bg-white rounded-lg p-4 border-l-4 border-l-green-500">
                       <div className="flex items-center mb-3">
                         <div className="flex items-center">
