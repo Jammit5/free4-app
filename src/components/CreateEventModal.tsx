@@ -29,6 +29,8 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
   const [visibility, setVisibility] = useState<'all_friends' | 'selected_friends' | 'groups' | 'overlap_only'>('all_friends')
   const [loading, setLoading] = useState(false)
   const [showMapsModal, setShowMapsModal] = useState(false)
+  const [showErrorToast, setShowErrorToast] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   const commonTitles = ['Coffee', 'Lunch', 'Dinner', 'Spazieren', 'Sport', 'Kino', 'Bier', 'Online-Zocken']
 
@@ -188,6 +190,15 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
     } catch (error: any) {
       console.error('Error creating event:', error)
       console.error('Error creating Free4:', error.message)
+      
+      // Show error toast to user
+      setErrorMessage(error.message)
+      setShowErrorToast(true)
+      
+      // Hide toast after 3 seconds
+      setTimeout(() => {
+        setShowErrorToast(false)
+      }, 3000)
     } finally {
       setLoading(false)
     }
@@ -456,6 +467,30 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
         onLocationSelect={handleLocationSelect}
         initialLocation={latitude && longitude ? { latitude, longitude, radius: radiusKm } : undefined}
       />
+
+      {/* Error Toast */}
+      {showErrorToast && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <div 
+            className="bg-white border border-black rounded-lg shadow-lg px-6 py-4"
+            style={{
+              animation: 'fadeOut 3.5s ease-in-out forwards'
+            }}
+          >
+            <p className="text-gray-900 font-medium">
+              {errorMessage}
+            </p>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes fadeOut {
+          0% { opacity: 1; transform: translateY(0); }
+          80% { opacity: 1; transform: translateY(0); }
+          100% { opacity: 0; transform: translateY(-10px); }
+        }
+      `}</style>
     </div>
   )
 }

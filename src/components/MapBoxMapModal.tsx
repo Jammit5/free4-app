@@ -135,7 +135,8 @@ export default function MapBoxMapModal({
             container: mapContainer.current,
             style: 'mapbox://styles/mapbox/streets-v12',
             center: center,
-            zoom: 13
+            zoom: 13,
+            language: 'de'
           })
 
           // Add click event listener
@@ -158,23 +159,67 @@ export default function MapBoxMapModal({
               name: `${lat.toFixed(6)}, ${lng.toFixed(6)}`
             })
 
-            // Reverse geocoding
+            // Reverse geocoding - try different approaches for German names
             try {
-              const response = await fetch(
+              // Try multiple API calls to get best German result
+              let bestLocationName = `${lat.toFixed(6)}, ${lng.toFixed(6)}` // fallback
+              
+              // Approach 1: Standard reverse geocoding
+              const response1 = await fetch(
                 `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&language=de`
               )
-              if (response.ok) {
-                const data = await response.json()
-                if (data.features && data.features[0]) {
-                  setSelectedLocation({
-                    latitude: lat,
-                    longitude: lng,
-                    name: data.features[0].place_name
-                  })
+              
+              // Approach 2: Try without language parameter
+              const response2 = await fetch(
+                `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}`
+              )
+              
+              const responses = [
+                { name: 'with language=de', response: response1 },
+                { name: 'without language', response: response2 }
+              ]
+              
+              for (const {name, response} of responses) {
+                if (response.ok) {
+                  const data = await response.json()
+                  
+                  if (data.features && data.features.length > 0) {
+                    const feature = data.features[0]
+                    const locationName = feature.text || feature.place_name
+                    
+                    // Use first valid location name we get
+                    if (locationName && locationName.length > 10) { // More than coordinates
+                      bestLocationName = locationName
+                      break
+                    }
+                  }
                 }
               }
+              
+              // If we still have Dutch names, manually correct known street names
+              if (bestLocationName.includes('Onder de Linden')) {
+                bestLocationName = bestLocationName.replace('Onder de Linden', 'Unter den Linden')
+              }
+              
+              // Clean up the location name
+              const locationName = bestLocationName
+                .replace(/, Deutschland$/, '')
+                .replace(/, Germany$/, '')
+                .replace(/, Berlin$/, '')
+              
+              setSelectedLocation({
+                latitude: lat,
+                longitude: lng,
+                name: locationName
+              })
             } catch (error) {
               console.error('Reverse geocoding error:', error)
+              // Fallback to coordinates
+              setSelectedLocation({
+                latitude: lat,
+                longitude: lng,
+                name: `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+              })
             }
           })
 
@@ -392,7 +437,7 @@ export default function MapBoxMapModal({
                   value={radius}
                   onChange={(e) => setRadius(parseFloat(e.target.value))}
                   className="w-2 h-64 bg-gray-200 rounded-lg appearance-none cursor-pointer vertical-slider"
-                  style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
+                  style={{ writingMode: 'vertical-lr', direction: 'rtl' }}
                 />
                 <span className="text-xs text-gray-600 mt-2 writing-mode-vertical">
                   0.1 km

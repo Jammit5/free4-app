@@ -349,6 +349,7 @@ export default function Dashboard({ user }: DashboardProps) {
               profile: friendEvent.profile,
               overlapStart: match.overlapStart,
               overlapEnd: match.overlapEnd,
+              overlapDurationMinutes: match.overlapDurationMinutes,
               distance: match.distance
             })
           } else {
@@ -639,7 +640,7 @@ export default function Dashboard({ user }: DashboardProps) {
                                   key={index}
                                   onClick={() => setSelectedMatch(match)}
                                   className="relative"
-                                  title={`${match.profile.full_name} - Free 4 ${match.friendEvent.title} (${match.overlapDurationMinutes || 30} Min. Überschneidung)`}
+                                  title={`${match.profile.full_name} - Free 4 ${match.friendEvent.title} (${match.overlapDurationMinutes} Min. Überschneidung)`}
                                 >
                                   {match.profile.avatar_url ? (
                                     <img 
@@ -770,7 +771,7 @@ export default function Dashboard({ user }: DashboardProps) {
                 )}
                 <div className="flex items-center text-sm text-gray-600 mb-2">
                   <Calendar size={14} className="mr-2" />
-                  {formatDateTime(selectedMatch.friendEvent.start_time)} - {formatDateTime(selectedMatch.friendEvent.end_time)}
+                  {formatTimeRange(selectedMatch.friendEvent.start_time, selectedMatch.friendEvent.end_time)}
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <MapPin size={14} className="mr-2" />
@@ -816,13 +817,9 @@ export default function Dashboard({ user }: DashboardProps) {
       {showDeleteToast && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
           <div 
-            className={`bg-white border border-black rounded-lg shadow-lg px-6 py-4 transition-opacity duration-500 ${
-              showDeleteToast ? 'opacity-100' : 'opacity-0'
-            }`}
+            className="bg-white border border-black rounded-lg shadow-lg px-6 py-4"
             style={{
-              animation: showDeleteToast 
-                ? 'fadeInOut 2.5s ease-in-out forwards' 
-                : 'none'
+              animation: 'fadeOut 2.5s ease-in-out forwards'
             }}
           >
             <p className="text-gray-900 font-medium">
@@ -833,9 +830,8 @@ export default function Dashboard({ user }: DashboardProps) {
       )}
 
       <style jsx>{`
-        @keyframes fadeInOut {
-          0% { opacity: 0; transform: translateY(-10px); }
-          20% { opacity: 1; transform: translateY(0); }
+        @keyframes fadeOut {
+          0% { opacity: 1; transform: translateY(0); }
           80% { opacity: 1; transform: translateY(0); }
           100% { opacity: 0; transform: translateY(-10px); }
         }

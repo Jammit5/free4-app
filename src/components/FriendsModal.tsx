@@ -222,12 +222,12 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
                 onChange={(e) => setSearchEmail(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && searchUser()}
                 placeholder="Email-Adresse eingeben..."
-                className="flex-1 px-3 py-2 border border-white/20 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
+                className="min-w-0 flex-1 px-3 py-2 border border-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
               />
               <button
                 onClick={searchUser}
                 disabled={searchLoading || !searchEmail.trim()}
-                className="px-4 py-2 bg-white border border-black text-gray-900 shadow-md rounded-md hover:bg-gray-50 disabled:opacity-50"
+                className="p-2 bg-white border border-black text-gray-900 shadow-md rounded-lg hover:bg-gray-50 disabled:opacity-50"
               >
                 {searchLoading ? 'Suche...' : 'Suchen'}
               </button>
@@ -291,7 +291,7 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
                         <p className="text-sm text-gray-600">{request.profile.email}</p>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="flex justify-end space-x-2">
                       <button
                         onClick={() => respondToRequest(request.id, true)}
                         className="px-4 py-2 bg-white border border-black text-gray-900 shadow-md rounded-md hover:bg-gray-50 text-sm"
@@ -327,24 +327,25 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
             ) : (
               <div className="space-y-3">
                 {friends.map((friend) => (
-                  <div key={friend.id} className="p-4 border border-white/20 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <Mail size={16} className="mr-2 text-gray-600" />
-                        <div>
-                          <p className="font-medium text-gray-900">{friend.profile.full_name}</p>
-                          <p className="text-sm text-gray-600">{friend.profile.email}</p>
+                  <div key={friend.id}>
+                    <div className="flex items-center justify-between space-x-2">
+                      <div className="flex items-center min-w-0 flex-1">
+                        <Mail size={16} className="mr-2 text-gray-600 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{friend.profile.full_name}</p>
+                          <p className="text-sm text-gray-600 truncate">{friend.profile.email}</p>
                         </div>
                       </div>
                       <button
                         onClick={() => removeFriend(friend.id)}
-                        className={`px-4 py-2 border border-black shadow-md rounded-md text-sm ${
+                        className={`w-8 h-8 flex items-center justify-center border shadow-md rounded-lg flex-shrink-0 ${
                           removeConfirmId === friend.id 
-                            ? 'bg-red-500 text-white hover:bg-red-600'
-                            : 'bg-white text-gray-900 hover:bg-gray-50'
+                            ? 'bg-red-500 border-red-600 text-white hover:bg-red-600'
+                            : 'bg-red-500 border-red-600 text-white hover:bg-red-600'
                         }`}
+                        title={removeConfirmId === friend.id ? 'Wirklich entfernen?' : 'Freund entfernen'}
                       >
-                        {removeConfirmId === friend.id ? 'Wirklich entfernen?' : 'Entfernen'}
+                        <X size={16} />
                       </button>
                     </div>
                     
@@ -354,7 +355,7 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
                         <p className="text-sm text-amber-800 mb-2">
                           Freundschaft mit {friend.profile.full_name} wirklich beenden?
                         </p>
-                        <div className="flex space-x-2">
+                        <div className="flex justify-end space-x-2">
                           <button
                             onClick={() => setRemoveConfirmId(null)}
                             className="px-4 py-2 bg-white border border-black text-gray-900 shadow-md rounded-md hover:bg-gray-50 text-sm"
