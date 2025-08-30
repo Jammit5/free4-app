@@ -106,18 +106,69 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
 
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  4. Weitergabe von Daten
+                  4. Verwendung von Mapbox
                 </h3>
-                <div className="text-gray-600">
+                <div className="text-gray-600 space-y-4">
                   <p>
-                    Es erfolgt keine Weitergabe Ihrer personenbezogenen Daten an Dritte.
+                    Unsere App nutzt den Kartendienst Mapbox (Mapbox Inc., 740 15th Street NW, 5th Floor, 
+                    Washington, DC 20005, USA), um interaktive Karten darzustellen.
+                  </p>
+                  
+                  <p>
+                    Beim Aufruf von Karteninhalten werden technisch bedingt Daten an die Server von Mapbox 
+                    übertragen. Dazu gehören insbesondere:
+                  </p>
+                  
+                  <ul className="list-disc list-inside space-y-1 ml-4">
+                    <li>Ihre IP-Adresse,</li>
+                    <li>Informationen zu Ihrem Endgerät und Browser (z. B. Gerätetyp, Betriebssystem, Version),</li>
+                    <li>technische Nutzungsdaten (Zeitpunkt, abgerufene Inhalte).</li>
+                  </ul>
+                  
+                  <p>Diese Daten sind erforderlich, um die Kartendarstellung bereitzustellen.</p>
+                  
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <p className="text-orange-800 text-sm">
+                      <strong>Standortfunktionen:</strong> Sofern Sie Standortfunktionen unserer App nutzen 
+                      (z. B. zur Anzeige Ihrer aktuellen Position oder zur Auswahl eines Treffpunktes), kann 
+                      es zusätzlich zur Übermittlung von Standortdaten (Koordinaten) an Mapbox kommen – 
+                      insbesondere dann, wenn wir Dienste wie Geocoding oder Routenplanung einsetzen. Wenn 
+                      lediglich ein von der App berechneter Marker gesetzt wird, werden diese Daten nicht 
+                      an Mapbox weitergegeben.
+                    </p>
+                  </div>
+                  
+                  <p>
+                    Die Verarbeitung durch Mapbox kann auch auf Servern in den USA erfolgen. Mit Mapbox 
+                    bestehen Standardvertragsklauseln der EU-Kommission zur Sicherstellung eines angemessenen 
+                    Datenschutzniveaus. Weitere Informationen finden Sie in der Datenschutzerklärung von 
+                    Mapbox: <a 
+                      href="https://www.mapbox.com/legal/privacy" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline"
+                    >
+                      https://www.mapbox.com/legal/privacy
+                    </a>
                   </p>
                 </div>
               </div>
 
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  5. Ihre Rechte
+                  5. Weitergabe von Daten
+                </h3>
+                <div className="text-gray-600">
+                  <p>
+                    Abgesehen von der oben beschriebenen Nutzung von Mapbox erfolgt keine Weitergabe 
+                    Ihrer personenbezogenen Daten an Dritte.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                  6. Ihre Rechte
                 </h3>
                 <div className="text-gray-600 space-y-4">
                   <p>Sie haben jederzeit das Recht auf:</p>
@@ -140,7 +191,7 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
 
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  6. Beschwerderecht
+                  7. Beschwerderecht
                 </h3>
                 <div className="text-gray-600">
                   <p>
