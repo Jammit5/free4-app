@@ -157,19 +157,37 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
 
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  5. Weitergabe von Daten
+                  5. Hosting-Anbieter (Vercel)
                 </h3>
-                <div className="text-gray-600">
+                <div className="text-gray-600 space-y-4">
                   <p>
-                    Abgesehen von der oben beschriebenen Nutzung von Mapbox erfolgt keine Weitergabe 
-                    Ihrer personenbezogenen Daten an Dritte.
+                    Wir hosten unsere App bei Vercel (Vercel Inc., 340 S Lemon Ave #4133, Walnut, CA 91789, USA). 
+                    Mit Vercel besteht ein Vertrag zur Auftragsverarbeitung gemäß Art. 28 DSGVO, der Bestandteil 
+                    der Nutzungsbedingungen ist.
+                  </p>
+                  <p>
+                    Beim Aufruf unserer Website werden technisch notwendige Daten an Vercel übertragen, 
+                    um die Website bereitzustellen. Diese umfassen insbesondere Ihre IP-Adresse, 
+                    Datum und Uhrzeit des Zugriffs sowie technische Informationen zu Ihrem Browser.
                   </p>
                 </div>
               </div>
 
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  6. Ihre Rechte
+                  6. Weitergabe von Daten
+                </h3>
+                <div className="text-gray-600">
+                  <p>
+                    Abgesehen von der oben beschriebenen Nutzung von Mapbox und Vercel erfolgt keine 
+                    Weitergabe Ihrer personenbezogenen Daten an Dritte.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                  7. Ihre Rechte
                 </h3>
                 <div className="text-gray-600 space-y-4">
                   <p>Sie haben jederzeit das Recht auf:</p>
@@ -192,7 +210,7 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
 
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  7. Beschwerderecht
+                  8. Beschwerderecht
                 </h3>
                 <div className="text-gray-600">
                   <p>
