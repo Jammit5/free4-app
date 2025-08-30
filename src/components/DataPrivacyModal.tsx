@@ -140,8 +140,9 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
                   
                   <p>
                     Die Verarbeitung durch Mapbox kann auch auf Servern in den USA erfolgen. Mit Mapbox 
-                    bestehen Standardvertragsklauseln der EU-Kommission zur Sicherstellung eines angemessenen 
-                    Datenschutzniveaus. Weitere Informationen finden Sie in der Datenschutzerklärung von 
+                    besteht ein Vertrag zur Auftragsverarbeitung gemäß Art. 28 DSGVO (Standard-DPA). 
+                    Zusätzlich bestehen Standardvertragsklauseln der EU-Kommission zur Sicherstellung eines 
+                    angemessenen Datenschutzniveaus. Weitere Informationen finden Sie in der Datenschutzerklärung von 
                     Mapbox: <a 
                       href="https://www.mapbox.com/legal/privacy" 
                       target="_blank" 
