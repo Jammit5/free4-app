@@ -175,19 +175,44 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
 
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  6. Weitergabe von Daten
+                  6. Backend-Dienstleister (Supabase)
                 </h3>
-                <div className="text-gray-600">
+                <div className="text-gray-600 space-y-4">
                   <p>
-                    Abgesehen von der oben beschriebenen Nutzung von Mapbox und Vercel erfolgt keine 
-                    Weitergabe Ihrer personenbezogenen Daten an Dritte.
+                    Wir nutzen Supabase (Supabase Inc., 970 Toa Payoh North #07-04, Singapore 318992) 
+                    als Backend-Dienstleister für Authentifizierung und Datenbank-Hosting. Dabei werden 
+                    personenbezogene Daten (z. B. E-Mail-Adresse, Anmeldedaten, Nutzereinträge) im 
+                    Auftrag verarbeitet.
+                  </p>
+                  <p>
+                    Mit Supabase besteht ein Vertrag zur Auftragsverarbeitung gemäß Art. 28 DSGVO. 
+                    Weitere Informationen finden Sie unter <a 
+                      href="https://supabase.com/legal/privacy" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline"
+                    >
+                      https://supabase.com/legal/privacy
+                    </a>.
                   </p>
                 </div>
               </div>
 
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  7. Ihre Rechte
+                  7. Weitergabe von Daten
+                </h3>
+                <div className="text-gray-600">
+                  <p>
+                    Abgesehen von der oben beschriebenen Nutzung von Mapbox, Vercel und Supabase erfolgt 
+                    keine Weitergabe Ihrer personenbezogenen Daten an Dritte.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                  8. Ihre Rechte
                 </h3>
                 <div className="text-gray-600 space-y-4">
                   <p>Sie haben jederzeit das Recht auf:</p>
@@ -210,7 +235,7 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
 
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  8. Beschwerderecht
+                  9. Beschwerderecht
                 </h3>
                 <div className="text-gray-600">
                   <p>
