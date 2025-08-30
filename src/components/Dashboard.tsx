@@ -504,6 +504,35 @@ export default function Dashboard({ user }: DashboardProps) {
     }
   }
 
+  const formatTimeRange = (startTime: string, endTime: string) => {
+    const start = new Date(startTime)
+    const end = new Date(endTime)
+    
+    // Check if same day
+    const sameDay = start.toDateString() === end.toDateString()
+    
+    if (sameDay) {
+      // Same day: show date once, then start-end time
+      const dateString = start.toLocaleDateString('de-DE', {
+        weekday: 'short',
+        month: 'short', 
+        day: 'numeric'
+      })
+      const startTimeString = start.toLocaleTimeString('de-DE', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+      const endTimeString = end.toLocaleTimeString('de-DE', {
+        hour: '2-digit', 
+        minute: '2-digit'
+      })
+      return `${dateString}, ${startTimeString} - ${endTimeString}`
+    } else {
+      // Different days: show full date/time for both
+      return `${formatDateTime(startTime)} - ${formatDateTime(endTime)}`
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-cyan-50 flex items-center justify-center">
