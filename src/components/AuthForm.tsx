@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import ImpressumModal from './ImpressumModal'
 
 export default function AuthForm() {
   const [email, setEmail] = useState('')
@@ -13,6 +14,7 @@ export default function AuthForm() {
   const [facebookLoading, setFacebookLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [showNameTooltip, setShowNameTooltip] = useState(false)
+  const [showImpressum, setShowImpressum] = useState(false)
 
   const handleGoogleAuth = async () => {
     setGoogleLoading(true)
@@ -251,6 +253,22 @@ export default function AuthForm() {
           )}
         </form>
       </div>
+
+      {/* Footer */}
+      <div className="mt-8 text-center">
+        <button
+          onClick={() => setShowImpressum(true)}
+          className="text-sm text-white/80 hover:text-white underline"
+        >
+          Impressum
+        </button>
+      </div>
+
+      {/* Impressum Modal */}
+      <ImpressumModal 
+        isOpen={showImpressum}
+        onClose={() => setShowImpressum(false)}
+      />
     </div>
   )
 }

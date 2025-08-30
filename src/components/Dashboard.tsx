@@ -8,6 +8,7 @@ import { Plus, LogOut, Users, Calendar, MapPin, User, Heart, X, Copy, RefreshCw 
 import CreateEventModal from './CreateEventModal'
 import FriendsModal from './FriendsModal'
 import ProfileModal from './ProfileModal'
+import ImpressumModal from './ImpressumModal'
 
 interface DashboardProps {
   user: User
@@ -27,6 +28,7 @@ export default function Dashboard({ user }: DashboardProps) {
   const [isRefreshingMatches, setIsRefreshingMatches] = useState(false)
   const [showDeleteToast, setShowDeleteToast] = useState(false)
   const [deletedEventTitle, setDeletedEventTitle] = useState('')
+  const [showImpressum, setShowImpressum] = useState(false)
   const matchCheckInterval = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
@@ -866,6 +868,26 @@ export default function Dashboard({ user }: DashboardProps) {
           </div>
         </div>
       )}
+
+      {/* Footer - only show when no modals are open */}
+      {!showCreateModal && !showFriendsModal && !showProfileModal && !selectedMatch && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white/10 backdrop-blur-sm border-t border-white/20">
+          <div className="max-w-6xl mx-auto px-4 py-3 text-center">
+            <button
+              onClick={() => setShowImpressum(true)}
+              className="text-sm text-white/80 hover:text-white underline"
+            >
+              Impressum
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Impressum Modal */}
+      <ImpressumModal 
+        isOpen={showImpressum}
+        onClose={() => setShowImpressum(false)}
+      />
 
       <style jsx>{`
         @keyframes fadeOut {
