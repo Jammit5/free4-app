@@ -200,11 +200,36 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
 
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  7. Weitergabe von Daten
+                  7. E-Mail-Dienst (Resend)
+                </h3>
+                <div className="text-gray-600 space-y-4">
+                  <p>
+                    Für den Versand von Kontaktformular-Nachrichten nutzen wir den E-Mail-Dienst Resend 
+                    (Resend, Inc., 2093 Philadelphia Pike #3221, Claymont, DE 19703, USA). Dabei werden 
+                    die von Ihnen im Formular eingegebenen Daten (z. B. Name, E-Mail-Adresse, Nachricht) 
+                    an Resend übermittelt und ausschließlich zum Zweck des E-Mail-Versands verarbeitet.
+                  </p>
+                  <p>
+                    Mit Resend besteht ein Vertrag zur Auftragsverarbeitung gemäß Art. 28 DSGVO. 
+                    Weitere Informationen finden Sie unter <a 
+                      href="https://resend.com/legal/privacy" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline"
+                    >
+                      https://resend.com/legal/privacy
+                    </a>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                  8. Weitergabe von Daten
                 </h3>
                 <div className="text-gray-600">
                   <p>
-                    Abgesehen von der oben beschriebenen Nutzung von Mapbox, Vercel und Supabase erfolgt 
+                    Abgesehen von der oben beschriebenen Nutzung von Mapbox, Vercel, Supabase und Resend erfolgt 
                     keine Weitergabe Ihrer personenbezogenen Daten an Dritte.
                   </p>
                 </div>
@@ -212,7 +237,7 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
 
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  8. Ihre Rechte
+                  9. Ihre Rechte
                 </h3>
                 <div className="text-gray-600 space-y-4">
                   <p>Sie haben jederzeit das Recht auf:</p>
@@ -235,7 +260,7 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
 
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  9. Beschwerderecht
+                  10. Beschwerderecht
                 </h3>
                 <div className="text-gray-600">
                   <p>
