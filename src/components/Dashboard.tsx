@@ -9,6 +9,7 @@ import CreateEventModal from './CreateEventModal'
 import FriendsModal from './FriendsModal'
 import ProfileModal from './ProfileModal'
 import ImpressumModal from './ImpressumModal'
+import ContactModal from './ContactModal'
 
 interface DashboardProps {
   user: User
@@ -29,6 +30,7 @@ export default function Dashboard({ user }: DashboardProps) {
   const [showDeleteToast, setShowDeleteToast] = useState(false)
   const [deletedEventTitle, setDeletedEventTitle] = useState('')
   const [showImpressum, setShowImpressum] = useState(false)
+  const [showContact, setShowContact] = useState(false)
   const matchCheckInterval = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
@@ -873,20 +875,32 @@ export default function Dashboard({ user }: DashboardProps) {
       {!showCreateModal && !showFriendsModal && !showProfileModal && !selectedMatch && (
         <div className="fixed bottom-0 left-0 right-0 bg-white/10 backdrop-blur-sm border-t border-white/20">
           <div className="max-w-6xl mx-auto px-4 py-3 text-center">
-            <button
-              onClick={() => setShowImpressum(true)}
-              className="text-sm text-white/80 hover:text-white underline"
-            >
-              Impressum
-            </button>
+            <div className="space-x-6">
+              <button
+                onClick={() => setShowImpressum(true)}
+                className="text-sm text-white/80 hover:text-white underline"
+              >
+                Impressum
+              </button>
+              <button
+                onClick={() => setShowContact(true)}
+                className="text-sm text-white/80 hover:text-white underline"
+              >
+                Kontakt
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Impressum Modal */}
+      {/* Modals */}
       <ImpressumModal 
         isOpen={showImpressum}
         onClose={() => setShowImpressum(false)}
+      />
+      <ContactModal 
+        isOpen={showContact}
+        onClose={() => setShowContact(false)}
       />
 
       <style jsx>{`

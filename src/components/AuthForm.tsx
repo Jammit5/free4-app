@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import ImpressumModal from './ImpressumModal'
+import ContactModal from './ContactModal'
 
 export default function AuthForm() {
   const [email, setEmail] = useState('')
@@ -15,6 +16,7 @@ export default function AuthForm() {
   const [message, setMessage] = useState('')
   const [showNameTooltip, setShowNameTooltip] = useState(false)
   const [showImpressum, setShowImpressum] = useState(false)
+  const [showContact, setShowContact] = useState(false)
 
   const handleGoogleAuth = async () => {
     setGoogleLoading(true)
@@ -254,20 +256,34 @@ export default function AuthForm() {
         </form>
       </div>
 
-      {/* Footer */}
-      <div className="mt-8 text-center">
-        <button
-          onClick={() => setShowImpressum(true)}
-          className="text-sm text-white/80 hover:text-white underline"
-        >
-          Impressum
-        </button>
+      {/* Footer - positioned at bottom center */}
+      <div className="fixed bottom-0 left-0 right-0">
+        <div className="text-center py-4">
+          <div className="space-x-6">
+            <button
+              onClick={() => setShowImpressum(true)}
+              className="text-sm text-white/80 hover:text-white underline"
+            >
+              Impressum
+            </button>
+            <button
+              onClick={() => setShowContact(true)}
+              className="text-sm text-white/80 hover:text-white underline"
+            >
+              Kontakt
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Impressum Modal */}
+      {/* Modals */}
       <ImpressumModal 
         isOpen={showImpressum}
         onClose={() => setShowImpressum(false)}
+      />
+      <ContactModal 
+        isOpen={showContact}
+        onClose={() => setShowContact(false)}
       />
     </div>
   )
