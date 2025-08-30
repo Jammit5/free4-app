@@ -752,93 +752,102 @@ export default function Dashboard({ user }: DashboardProps) {
 
       {/* Match Detail Modal */}
       {selectedMatch && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-6 border-b">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center">
-                <Heart size={20} className="mr-2 text-red-500" />
-                Match gefunden!
+        <div className="fixed inset-0 z-50" style={{
+          background: 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)'
+        }}>
+          {/* Header */}
+          <header className="bg-white/90 backdrop-blur-sm shadow-sm border-b border-white/20">
+            <div className="max-w-2xl mx-auto px-4 py-4 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+                <Calendar size={24} className="mr-2" />
+                Treffen möglich!
               </h2>
               <button 
                 onClick={() => setSelectedMatch(null)} 
-                className="text-gray-500 hover:text-gray-700"
+                className="p-2 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
+                title="Zurück"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
+          </header>
 
-            <div className="p-6">
-              {/* Friend Profile */}
-              <div className="text-center mb-6">
-                <div className="w-20 h-20 rounded-full bg-gray-200 overflow-hidden mx-auto mb-3">
-                  {selectedMatch.profile.avatar_url ? (
-                    <img 
-                      src={selectedMatch.profile.avatar_url} 
-                      alt={selectedMatch.profile.full_name} 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      <User size={32} />
-                    </div>
-                  )}
+          {/* Main Content */}
+          <main className="max-w-2xl mx-auto px-4 py-8 overflow-y-auto" style={{ height: 'calc(100vh - 80px)' }}>
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm border border-white/20">
+              <div className="p-6">
+                {/* Friend Profile */}
+                <div className="text-center mb-6">
+                  <div className="w-24 h-24 rounded-full bg-gray-200 overflow-hidden mx-auto mb-4">
+                    {selectedMatch.profile.avatar_url ? (
+                      <img 
+                        src={selectedMatch.profile.avatar_url} 
+                        alt={selectedMatch.profile.full_name} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <User size={40} />
+                      </div>
+                    )}
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    {selectedMatch.profile.full_name}
+                  </h3>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {selectedMatch.profile.full_name}
-                </h3>
-              </div>
 
-              {/* Friend's Free4 */}
-              <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border border-green-200 mb-6">
-                <h4 className="font-semibold text-gray-900 mb-2">
-                  Free 4 {selectedMatch.friendEvent.title}
-                </h4>
-                {selectedMatch.friendEvent.description && (
-                  <p className="text-sm text-gray-600 mb-3">
-                    {selectedMatch.friendEvent.description}
+                {/* Friend's Free4 */}
+                <div className="bg-green-50 rounded-lg p-4 border border-green-200 mb-6">
+                  <h4 className="font-semibold text-gray-900 mb-3">
+                    Free 4 {selectedMatch.friendEvent.title}
+                  </h4>
+                  {selectedMatch.friendEvent.description && (
+                    <p className="text-sm text-gray-600 mb-3">
+                      {selectedMatch.friendEvent.description}
+                    </p>
+                  )}
+                  <div className="flex items-center text-sm text-gray-600 mb-2">
+                    <Calendar size={14} className="mr-2" />
+                    {formatTimeRange(selectedMatch.friendEvent.start_time, selectedMatch.friendEvent.end_time)}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <MapPin size={14} className="mr-2" />
+                    {selectedMatch.friendEvent.location_type === 'online' 
+                      ? 'Online' 
+                      : selectedMatch.friendEvent.location_name || 'Vor Ort'
+                    }
+                    {selectedMatch.friendEvent.location_type === 'physical' && selectedMatch.friendEvent.radius_km && (
+                      <span className="ml-1">
+                        ({selectedMatch.friendEvent.radius_km === 0.1 ? 'Nur hier' : `${selectedMatch.friendEvent.radius_km}km`})
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Match Info */}
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <div className="flex items-center mb-2">
+                    <Calendar size={16} className="mr-2 text-blue-600" />
+                    <span className="font-medium text-blue-700">Gemeinsame Zeit</span>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-2">
+                    {formatTimeRange(selectedMatch.overlapStart, selectedMatch.overlapEnd)}
                   </p>
-                )}
-                <div className="flex items-center text-sm text-gray-600 mb-2">
-                  <Calendar size={14} className="mr-2" />
-                  {formatTimeRange(selectedMatch.friendEvent.start_time, selectedMatch.friendEvent.end_time)}
+                  <p className="text-xs text-gray-600">
+                    {selectedMatch.distance !== undefined && `~${selectedMatch.distance}km Entfernung`}
+                  </p>
                 </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <MapPin size={14} className="mr-2" />
-                  {selectedMatch.friendEvent.location_type === 'online' 
-                    ? 'Online' 
-                    : selectedMatch.friendEvent.location_name || 'Vor Ort'
-                  }
-                  {selectedMatch.friendEvent.location_type === 'physical' && selectedMatch.friendEvent.radius_km && (
-                    <span className="ml-1">
-                      ({selectedMatch.friendEvent.radius_km === 0.1 ? 'Nur hier' : `${selectedMatch.friendEvent.radius_km}km`})
-                    </span>
-                  )}
-                </div>
-              </div>
 
-              {/* Match Info */}
-              <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-                <div className="flex items-center mb-2">
-                  <Heart size={16} className="mr-2 text-red-500" />
-                  <span className="font-medium text-red-700">Gemeinsame Zeit</span>
-                </div>
-                <p className="text-sm text-gray-700 mb-2">
-                  {formatDateTime(selectedMatch.overlapStart)} - {formatDateTime(selectedMatch.overlapEnd)}
-                </p>
-                <p className="text-xs text-gray-600">
-                  {selectedMatch.distance !== undefined && `~${selectedMatch.distance}km Entfernung`}
-                </p>
+                {/* Close Button */}
+                <button
+                  onClick={() => setSelectedMatch(null)}
+                  className="w-full mt-6 py-3 px-4 bg-white border border-black text-gray-900 rounded-lg shadow-md hover:bg-gray-50"
+                >
+                  Schließen
+                </button>
               </div>
-
-              {/* Close Button */}
-              <button
-                onClick={() => setSelectedMatch(null)}
-                className="w-full mt-6 py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Schließen
-              </button>
             </div>
-          </div>
+          </main>
         </div>
       )}
 
