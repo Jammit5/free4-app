@@ -178,13 +178,17 @@ export async function POST(request: NextRequest) {
       .delete()
       .in('user_free4_id', userEvents.map(e => e.id))
 
-    // Insert new matches
+    // Insert new matches with upsert to handle duplicates
     const { data: insertedMatches, error: insertError } = await supabase
       .from('matches')
-      .insert(allMatches)
+      .upsert(allMatches, { 
+        onConflict: 'user_free4_id,matched_free4_id',
+        ignoreDuplicates: false 
+      })
       .select()
 
     if (insertError) {
+      console.error('Error upserting matches:', insertError)
       return NextResponse.json({ error: 'Failed to save matches' }, { status: 500 })
     }
 
@@ -194,7 +198,11 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Match calculation error:', error)
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 })
   }
 }
 
@@ -218,7 +226,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ matches: [] })
     }
 
-    // Get matches using the view for easier data access
+    // Get matches using the view for complete data
     const { data: matches, error } = await supabase
       .from('match_details')
       .select('*')

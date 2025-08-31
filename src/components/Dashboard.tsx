@@ -273,6 +273,7 @@ export default function Dashboard({ user }: DashboardProps) {
       // Transform server matches to the format expected by the UI
       const matches: {[eventId: string]: any[]} = {}
 
+      // Transform server matches with complete data from match_details view
       result.matches?.forEach((match: any) => {
         if (!matches[match.user_free4_id]) {
           matches[match.user_free4_id] = []
