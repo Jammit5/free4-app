@@ -225,10 +225,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ matches: [] })
     }
 
-    // Get matches using the view for complete data
+    // Get matches with manual joins to avoid RLS issues with views
     const { data: matches, error } = await supabase
-      .from('match_details')
-      .select('*')
+      .from('matches')
+      .select(`
+        *,
+        matched_free4:free4_events!matched_free4_id(
+          *,
+          profile:profiles(*)
+        )
+      `)
       .in('user_free4_id', userEvents.map(e => e.id))
       .eq('status', 'active')
       .order('match_score', { ascending: false })

@@ -273,7 +273,7 @@ export default function Dashboard({ user }: DashboardProps) {
       // Transform server matches to the format expected by the UI
       const matches: {[eventId: string]: any[]} = {}
 
-      // Transform server matches with complete data from match_details view
+      // Transform server matches with direct table access
       result.matches?.forEach((match: any) => {
         if (!matches[match.user_free4_id]) {
           matches[match.user_free4_id] = []
@@ -282,17 +282,17 @@ export default function Dashboard({ user }: DashboardProps) {
         matches[match.user_free4_id].push({
           friendEvent: {
             id: match.matched_free4_id,
-            title: match.matched_title,
-            start_time: match.matched_start_time,
-            end_time: match.matched_end_time,
-            location_name: match.matched_location_name,
-            latitude: match.matched_latitude,
-            longitude: match.matched_longitude,
-            radius_km: match.matched_radius_km
+            title: match.matched_free4?.title,
+            start_time: match.matched_free4?.start_time,
+            end_time: match.matched_free4?.end_time,
+            location_name: match.matched_free4?.location_name,
+            latitude: match.matched_free4?.latitude,
+            longitude: match.matched_free4?.longitude,
+            radius_km: match.matched_free4?.radius_km
           },
           profile: {
-            full_name: match.matched_name,
-            avatar_url: match.matched_avatar_url
+            full_name: match.matched_free4?.profile?.full_name,
+            avatar_url: match.matched_free4?.profile?.avatar_url
           },
           overlapStart: match.overlap_start,
           overlapEnd: match.overlap_end,
