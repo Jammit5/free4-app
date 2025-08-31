@@ -236,7 +236,6 @@ export default function Dashboard({ user }: DashboardProps) {
 
   const findMatchesForEvents = async () => {
     try {
-      console.log('🔍 Starting server-side match calculation for user:', user.id)
       
       // Call server-side matching API
       const response = await fetch('/api/matches', {
@@ -253,27 +252,23 @@ export default function Dashboard({ user }: DashboardProps) {
         throw new Error('Failed to calculate matches')
       }
 
-      const result = await response.json()
-      console.log('✅ Server-side matching result:', result.message)
+      await response.json()
       
       // Now fetch the calculated matches
       await loadServerSideMatches()
     } catch (error) {
-      console.error('Error finding matches:', error)
+      // Silent error handling
     }
   }
 
   const loadServerSideMatches = async () => {
     try {
-      console.log('📥 Loading server-side matches for user:', user.id)
-      
       const response = await fetch(`/api/matches?userId=${user.id}`)
       if (!response.ok) {
         throw new Error('Failed to load matches')
       }
 
       const result = await response.json()
-      console.log('✅ Loaded matches:', result.matches?.length || 0)
 
       // Transform server matches to the format expected by the UI
       const matches: {[eventId: string]: any[]} = {}
@@ -307,10 +302,9 @@ export default function Dashboard({ user }: DashboardProps) {
       })
 
       setEventMatches(matches)
-      console.log('🎯 Transformed matches:', matches)
 
     } catch (error) {
-      console.error('Error loading server-side matches:', error)
+      // Silent error handling
     }
   }
 

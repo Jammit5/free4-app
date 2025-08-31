@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// Use service role for API routes to bypass RLS
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
 // Calculate distance between two points using Haversine formula
@@ -62,17 +63,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
 
-    console.log(`🔍 Starting match calculation for user: ${userId}`)
+    const currentTime = new Date().toISOString()
     
     // Get all user's Free4 events
     const { data: userEvents, error: userEventsError } = await supabase
       .from('free4_events')
       .select('*')
       .eq('user_id', userId)
-      .gte('end_time', new Date().toISOString()) // Only future events
-
+      .gte('end_time', currentTime) // Only future events
+    
     if (userEventsError) {
-      console.error('Error fetching user events:', userEventsError)
       return NextResponse.json({ error: 'Failed to fetch user events' }, { status: 500 })
     }
 
@@ -109,7 +109,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ matches: [], message: 'No friend events found' })
     }
 
-    console.log(`📊 Found ${userEvents.length} user events and ${friendEvents.length} friend events`)
 
     // Calculate all matches
     const allMatches = []
@@ -168,7 +167,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(`🎯 Found ${allMatches.length} potential matches`)
 
     if (allMatches.length === 0) {
       return NextResponse.json({ matches: [], message: 'No matches found' })
@@ -187,11 +185,8 @@ export async function POST(request: NextRequest) {
       .select()
 
     if (insertError) {
-      console.error('Error inserting matches:', insertError)
       return NextResponse.json({ error: 'Failed to save matches' }, { status: 500 })
     }
-
-    console.log(`✅ Successfully saved ${insertedMatches?.length} matches`)
 
     return NextResponse.json({ 
       matches: insertedMatches,
@@ -199,7 +194,6 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Match calculation error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -233,14 +227,12 @@ export async function GET(request: NextRequest) {
       .order('match_score', { ascending: false })
 
     if (error) {
-      console.error('Error fetching matches:', error)
       return NextResponse.json({ error: 'Failed to fetch matches' }, { status: 500 })
     }
 
     return NextResponse.json({ matches: matches || [] })
 
   } catch (error) {
-    console.error('Get matches error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
