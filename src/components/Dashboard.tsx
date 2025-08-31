@@ -39,6 +39,8 @@ export default function Dashboard({ user }: DashboardProps) {
     loadProfile()
     loadEvents()
     loadPendingRequestsCount()
+    // Load existing server-side matches on dashboard load
+    loadServerSideMatches()
   }, [user])
 
   useEffect(() => {
@@ -234,173 +236,84 @@ export default function Dashboard({ user }: DashboardProps) {
 
   const findMatchesForEvents = async () => {
     try {
-      console.log('🔍 Starting match search for user:', user.id)
+      console.log('🔍 Starting server-side match calculation for user:', user.id)
       
-      // Get all my friends
-      const { data: friendships } = await supabase
-        .from('friendships')
-        .select('requester_id, addressee_id')
-        .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
-        .eq('status', 'accepted')
+      // Call server-side matching API
+      const response = await fetch('/api/matches', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id
+        })
+      })
 
-      console.log('👥 Found friendships:', friendships?.length || 0, friendships)
-      
-      if (!friendships || friendships.length === 0) {
-        console.log('❌ No friends found, skipping match search')
-        return
+      if (!response.ok) {
+        throw new Error('Failed to calculate matches')
       }
 
-      // Extract friend IDs
-      const friendIds = friendships.map(f => 
-        f.requester_id === user.id ? f.addressee_id : f.requester_id
-      )
+      const result = await response.json()
+      console.log('✅ Server-side matching result:', result.message)
       
-      console.log('👥 Friend IDs:', friendIds)
-
-      // Debug: Let's see ALL events in the database to understand what's there
-      const { data: allEvents, error: allEventsError } = await supabase
-        .from('free4_events')
-        .select(`
-          id,
-          title,
-          user_id,
-          start_time,
-          end_time,
-          visibility,
-          created_at
-        `)
-        .order('created_at', { ascending: false })
-      
-      console.log('🗂️ ALL EVENTS in database:', allEvents?.length || 0)
-      console.log('❌ All events query error:', allEventsError)
-      
-      allEvents?.forEach((event, index) => {
-        console.log(`  ${index + 1}. 📅 "${event.title}" by user ${event.user_id} - ID: ${event.id} - visibility: ${event.visibility} - created: ${event.created_at}`)
-      })
-      
-      // Also check for specific user events
-      const { data: currentUserEvents } = await supabase
-        .from('free4_events')
-        .select('*')
-        .eq('user_id', user.id)
-        
-      const { data: friendEventsForDebug } = await supabase
-        .from('free4_events')
-        .select('*')
-        .in('user_id', friendIds)
-        
-      console.log('👤 Current user events:', currentUserEvents?.length || 0, currentUserEvents)
-      console.log('👥 Friend events (by ID):', friendEventsForDebug?.length || 0, friendEventsForDebug)
-
-      // Get all friend events with profiles
-      const currentTime = new Date().toISOString()
-      console.log('⏰ Current time filter:', currentTime)
-      console.log('🔍 Looking for events from user IDs:', friendIds)
-      
-      // First, let's see ALL friend events (without filters)
-      const { data: allFriendEvents, error: allError } = await supabase
-        .from('free4_events')
-        .select(`
-          *,
-          profile:profiles(*)
-        `)
-        .in('user_id', friendIds)
-        
-      console.log('📅 ALL friend events (no filters):', allFriendEvents?.length || 0, allFriendEvents)
-      console.log('❌ Query error:', allError)
-      
-      // Now apply filters step by step
-      const { data: futureFriendEvents } = await supabase
-        .from('free4_events')
-        .select(`
-          *,
-          profile:profiles(*)
-        `)
-        .in('user_id', friendIds)
-        .gte('end_time', currentTime)
-        
-      console.log('⏰ Friend events in future:', futureFriendEvents?.length || 0, futureFriendEvents)
-      
-      const { data: friendEvents, error: finalError } = await supabase
-        .from('free4_events')
-        .select(`
-          *,
-          profile:profiles(*)
-        `)
-        .in('user_id', friendIds)
-        .gte('end_time', currentTime)
-        .in('visibility', ['all_friends', 'overlap_only'])
-      
-      console.log('👀 Friend events with visibility filter:', friendEvents?.length || 0, friendEvents)
-      console.log('❌ Final query error:', finalError)
-
-      if (!friendEvents) return
-
-      // Find matches for each of my events
-      const matches: {[eventId: string]: any[]} = {}
-      
-      console.log('🔍 Checking matches for my events:', events.length)
-
-      events.forEach(myEvent => {
-        console.log(`\n📅 Checking event: "${myEvent.title}" (${myEvent.start_time} - ${myEvent.end_time})`)
-        const eventMatches: any[] = []
-        
-        friendEvents.forEach(friendEvent => {
-          console.log(`  👤 Checking against friend event: "${friendEvent.title}" (${friendEvent.start_time} - ${friendEvent.end_time})`)
-          const match = checkEventMatch(myEvent, friendEvent)
-          if (match) {
-            console.log('  ✅ MATCH FOUND!', match)
-            eventMatches.push({
-              friendEvent,
-              profile: friendEvent.profile,
-              overlapStart: match.overlapStart,
-              overlapEnd: match.overlapEnd,
-              overlapDurationMinutes: match.overlapDurationMinutes,
-              distance: match.distance
-            })
-          } else {
-            console.log('  ❌ No match')
-          }
-        })
-
-        if (eventMatches.length > 0) {
-          console.log(`  🎉 Total matches for "${myEvent.title}":`, eventMatches.length)
-          matches[myEvent.id] = eventMatches
-        } else {
-          console.log(`  😕 No matches for "${myEvent.title}"`)
-        }
-      })
-
-      setEventMatches(matches)
+      // Now fetch the calculated matches
+      await loadServerSideMatches()
     } catch (error) {
       console.error('Error finding matches:', error)
     }
   }
 
-  const checkEventMatch = (myEvent: Free4Event, friendEvent: Free4Event) => {
-    // Check time overlap (minimum 30 minutes)
-    const myStart = new Date(myEvent.start_time)
-    const myEnd = new Date(myEvent.end_time)
-    const friendStart = new Date(friendEvent.start_time)
-    const friendEnd = new Date(friendEvent.end_time)
+  const loadServerSideMatches = async () => {
+    try {
+      console.log('📥 Loading server-side matches for user:', user.id)
+      
+      const response = await fetch(`/api/matches?userId=${user.id}`)
+      if (!response.ok) {
+        throw new Error('Failed to load matches')
+      }
 
-    const overlapStart = new Date(Math.max(myStart.getTime(), friendStart.getTime()))
-    const overlapEnd = new Date(Math.min(myEnd.getTime(), friendEnd.getTime()))
+      const result = await response.json()
+      console.log('✅ Loaded matches:', result.matches?.length || 0)
 
-    const overlapMinutes = (overlapEnd.getTime() - overlapStart.getTime()) / (1000 * 60)
-    if (overlapMinutes < 30) return null
+      // Transform server matches to the format expected by the UI
+      const matches: {[eventId: string]: any[]} = {}
 
-    // Check location compatibility
-    const locationMatch = checkLocationMatch(myEvent, friendEvent)
-    if (!locationMatch) return null
+      result.matches?.forEach((match: any) => {
+        if (!matches[match.user_free4_id]) {
+          matches[match.user_free4_id] = []
+        }
 
-    return {
-      overlapStart: overlapStart.toISOString(),
-      overlapEnd: overlapEnd.toISOString(),
-      overlapDurationMinutes: Math.round(overlapMinutes),
-      distance: locationMatch.distance
+        matches[match.user_free4_id].push({
+          friendEvent: {
+            id: match.matched_free4_id,
+            title: match.matched_title,
+            start_time: match.matched_start_time,
+            end_time: match.matched_end_time,
+            location_name: match.matched_location_name,
+            latitude: match.matched_latitude,
+            longitude: match.matched_longitude,
+            radius_km: match.matched_radius_km
+          },
+          profile: {
+            full_name: match.matched_name,
+            avatar_url: match.matched_avatar_url
+          },
+          overlapStart: match.overlap_start,
+          overlapEnd: match.overlap_end,
+          overlapDurationMinutes: match.overlap_duration_minutes,
+          distance: match.distance_km,
+          matchScore: match.match_score
+        })
+      })
+
+      setEventMatches(matches)
+      console.log('🎯 Transformed matches:', matches)
+
+    } catch (error) {
+      console.error('Error loading server-side matches:', error)
     }
   }
+
 
   const getBorderColorForOverlap = (overlapMinutes: number) => {
     if (overlapMinutes <= 30) {
@@ -410,73 +323,6 @@ export default function Dashboard({ user }: DashboardProps) {
     }
   }
 
-  const checkLocationMatch = (myEvent: Free4Event, friendEvent: Free4Event) => {
-    // Both online events always match
-    if (myEvent.location_type === 'online' && friendEvent.location_type === 'online') {
-      return { distance: 0 }
-    }
-
-    // One online, one physical - no match
-    if (myEvent.location_type !== friendEvent.location_type) {
-      return null
-    }
-
-    // Both physical events
-    if (myEvent.location_type === 'physical' && friendEvent.location_type === 'physical') {
-      const myRadius = myEvent.radius_km || 2
-      const friendRadius = friendEvent.radius_km || 2
-      
-      // If both events have GPS coordinates, use accurate distance calculation
-      if (myEvent.latitude && myEvent.longitude && friendEvent.latitude && friendEvent.longitude) {
-        const distance = calculateDistance(
-          myEvent.latitude, myEvent.longitude,
-          friendEvent.latitude, friendEvent.longitude
-        )
-        
-        // Check if events are within each other's radius
-        const maxAllowedDistance = myRadius + friendRadius
-        if (distance <= maxAllowedDistance) {
-          return { distance: Math.round(distance * 100) / 100 } // Round to 2 decimal places
-        }
-        
-        return null
-      }
-      
-      // Fallback to name-based matching for events without GPS coordinates
-      const locationNamesMatch = myEvent.location_name?.toLowerCase().includes(friendEvent.location_name?.toLowerCase()) ||
-                                 friendEvent.location_name?.toLowerCase().includes(myEvent.location_name?.toLowerCase())
-      
-      if (locationNamesMatch) {
-        return { distance: 0.5 } // Estimated distance for name matches
-      }
-
-      // Large radius = likely to overlap in same city
-      const maxRadius = Math.max(myRadius, friendRadius)
-      if (maxRadius >= 5) {
-        return { distance: 2.5 } // Estimated city-wide distance
-      }
-    }
-
-    return null
-  }
-
-  // Calculate distance between two GPS coordinates using Haversine formula
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371 // Radius of the Earth in kilometers
-    const dLat = toRadians(lat2 - lat1)
-    const dLon = toRadians(lon2 - lon1)
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2)
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-    const distance = R * c // Distance in kilometers
-    return distance
-  }
-
-  const toRadians = (degrees: number): number => {
-    return degrees * (Math.PI / 180)
-  }
 
   const formatDateTime = (dateTime: string) => {
     return new Date(dateTime).toLocaleString('de-DE', {

@@ -184,6 +184,30 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
 
       if (error) throw error
 
+      // Trigger automatic re-matching after creating/updating a Free4
+      try {
+        console.log('🔄 Triggering automatic re-matching after Free4 creation/update')
+        const matchResponse = await fetch('/api/matches', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: user.id
+          })
+        })
+        
+        if (matchResponse.ok) {
+          const matchResult = await matchResponse.json()
+          console.log('✅ Auto-matching completed:', matchResult.message)
+        } else {
+          console.warn('⚠️ Auto-matching failed, but Free4 was created successfully')
+        }
+      } catch (matchError) {
+        console.warn('⚠️ Auto-matching error:', matchError)
+        // Don't throw - Free4 was created successfully
+      }
+
       resetForm()
       onEventCreated()
       onClose()
