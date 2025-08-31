@@ -35,8 +35,8 @@ export async function POST(request: NextRequest) {
 
     // Send email with Resend
     const emailResult = await resend.emails.send({
-      from: 'Free4 App <onboarding@resend.dev>',
-      to: ['jammit@gmail.com'],
+      from: 'Free4 App <noreply@free4.app>',
+      to: ['support@free4.app'],
       replyTo: email,
       subject: `Kontaktanfrage von ${name} - Free4 App`,
       html: `
