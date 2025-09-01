@@ -59,6 +59,18 @@ export async function POST(request: NextRequest) {
     const { userId } = await request.json()
     console.log(`🚀 POST /api/matches called for userId: ${userId}`)
     
+    // Debug: Log all headers
+    console.log('🔍 POST: All headers received:')
+    const headerEntries: string[] = []
+    request.headers.forEach((value, key) => {
+      if (key.toLowerCase() === 'authorization') {
+        headerEntries.push(`${key}: ${value.substring(0, 30)}...`)
+      } else {
+        headerEntries.push(`${key}: ${value}`)
+      }
+    })
+    console.log(headerEntries.join(', '))
+    
     if (!userId) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
