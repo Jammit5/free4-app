@@ -305,33 +305,68 @@ export default function Dashboard({ user }: DashboardProps) {
       // Transform server matches to the format expected by the UI
       const matches: {[eventId: string]: any[]} = {}
 
-      // Transform server matches from match_details view
+      // Transform server matches from match_details view (bidirectional)
       result.matches?.forEach((match: any) => {
-        if (!matches[match.user_free4_id]) {
-          matches[match.user_free4_id] = []
+        // Check which event belongs to current user
+        const userEvents = events.map(e => e.id)
+        const isUserFree4 = userEvents.includes(match.user_free4_id)
+        const isMatchedFree4 = userEvents.includes(match.matched_free4_id)
+        
+        if (isUserFree4) {
+          // Current user's event is user_free4_id
+          if (!matches[match.user_free4_id]) {
+            matches[match.user_free4_id] = []
+          }
+          
+          matches[match.user_free4_id].push({
+            friendEvent: {
+              id: match.matched_free4_id,
+              title: match.matched_title,
+              start_time: match.matched_start_time,
+              end_time: match.matched_end_time,
+              location_name: match.matched_location_name,
+              latitude: match.matched_latitude,
+              longitude: match.matched_longitude,
+              radius_km: match.matched_radius_km
+            },
+            profile: {
+              full_name: match.matched_name,
+              avatar_url: match.matched_avatar_url
+            },
+            overlapStart: match.overlap_start,
+            overlapEnd: match.overlap_end,
+            overlapDurationMinutes: match.overlap_duration_minutes,
+            distance: match.distance_km,
+            matchScore: match.match_score
+          })
+        } else if (isMatchedFree4) {
+          // Current user's event is matched_free4_id
+          if (!matches[match.matched_free4_id]) {
+            matches[match.matched_free4_id] = []
+          }
+          
+          matches[match.matched_free4_id].push({
+            friendEvent: {
+              id: match.user_free4_id,
+              title: match.user_title,
+              start_time: match.user_start_time,
+              end_time: match.user_end_time,
+              location_name: match.user_location_name,
+              latitude: match.user_latitude,
+              longitude: match.user_longitude,
+              radius_km: match.user_radius_km
+            },
+            profile: {
+              full_name: match.user_name,
+              avatar_url: match.user_avatar_url
+            },
+            overlapStart: match.overlap_start,
+            overlapEnd: match.overlap_end,
+            overlapDurationMinutes: match.overlap_duration_minutes,
+            distance: match.distance_km,
+            matchScore: match.match_score
+          })
         }
-
-        matches[match.user_free4_id].push({
-          friendEvent: {
-            id: match.matched_free4_id,
-            title: match.matched_title,
-            start_time: match.matched_start_time,
-            end_time: match.matched_end_time,
-            location_name: match.matched_location_name,
-            latitude: match.matched_latitude,
-            longitude: match.matched_longitude,
-            radius_km: match.matched_radius_km
-          },
-          profile: {
-            full_name: match.matched_name,
-            avatar_url: match.matched_avatar_url
-          },
-          overlapStart: match.overlap_start,
-          overlapEnd: match.overlap_end,
-          overlapDurationMinutes: match.overlap_duration_minutes,
-          distance: match.distance_km,
-          matchScore: match.match_score
-        })
       })
 
       setEventMatches(matches)
