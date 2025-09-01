@@ -76,7 +76,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the authorization header to validate the user
-    const authHeader = request.headers.get('authorization')
+    let authHeader = request.headers.get('authorization')
+    
+    // Vercel sometimes puts headers in x-vercel-sc-headers
+    if (!authHeader) {
+      const vercelHeaders = request.headers.get('x-vercel-sc-headers')
+      if (vercelHeaders) {
+        try {
+          const parsedHeaders = JSON.parse(vercelHeaders)
+          authHeader = parsedHeaders.Authorization
+          console.log(`🔍 POST: Found auth header in x-vercel-sc-headers: ${!!authHeader}`)
+        } catch (e) {
+          console.log('🔍 POST: Failed to parse x-vercel-sc-headers')
+        }
+      }
+    }
+    
     console.log(`🔍 POST: Auth header exists: ${!!authHeader}`)
     console.log(`🔍 POST: Auth header value: ${authHeader ? authHeader.substring(0, 20) + '...' : 'null'}`)
     
