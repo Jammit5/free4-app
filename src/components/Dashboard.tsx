@@ -246,12 +246,16 @@ export default function Dashboard({ user }: DashboardProps) {
       console.log('🔍 Frontend: Using token for POST:', session.access_token.substring(0, 20) + '...')
 
       // Call server-side matching API with retry on 401
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+      }
+      console.log('🔍 Frontend: Sending headers:', Object.keys(headers))
+      console.log('🔍 Frontend: Authorization header value:', headers.Authorization.substring(0, 30) + '...')
+      
       let response = await fetch('/api/matches', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
+        headers: headers,
         body: JSON.stringify({
           userId: user.id
         })
