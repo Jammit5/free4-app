@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 export function createClient() {
@@ -7,7 +7,7 @@ export function createClient() {
   // Get session cookie
   const sessionCookie = cookieStore.get('supabase-auth-token')
   
-  return createClient(
+  return createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
