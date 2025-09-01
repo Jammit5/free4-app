@@ -71,17 +71,10 @@ export async function POST(request: NextRequest) {
 
     const token = authHeader.substring(7)
 
-    // Create authenticated Supabase client with user token
-    const authenticatedSupabase = createClient(
+    // Create service client for DB operations (user already validated via JWT)
+    const serviceSupabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: {
-          headers: {
-            authorization: `Bearer ${token}`
-          }
-        }
-      }
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
     // Manual JWT token validation (since auth.getUser() doesn't work server-side)
@@ -110,9 +103,9 @@ export async function POST(request: NextRequest) {
     const currentTime = new Date().toISOString()
     console.log(`⏰ Current time: ${currentTime}`)
     
-    // Get all user's Free4 events using authenticated client
+    // Get all user's Free4 events using service client (user already validated)
     console.log(`🔍 Searching for events with userId: ${userId}, after: ${currentTime}`)
-    const { data: userEvents, error: userEventsError } = await authenticatedSupabase
+    const { data: userEvents, error: userEventsError } = await serviceSupabase
       .from('free4_events')
       .select('*')
       .eq('user_id', userId)
@@ -134,7 +127,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's friends
-    const { data: friendships } = await authenticatedSupabase
+    const { data: friendships } = await serviceSupabase
       .from('friendships')
       .select('requester_id, addressee_id')
       .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`)
@@ -238,7 +231,7 @@ export async function POST(request: NextRequest) {
 
     // Clear existing matches for this user (both directions)
     console.log('🗑️ Clearing existing matches...')
-    const { error: deleteError } = await authenticatedSupabase
+    const { error: deleteError } = await serviceSupabase
       .from('matches')
       .delete()
       .or(`user_free4_id.in.(${userEvents.map(e => e.id).join(',')}),matched_free4_id.in.(${userEvents.map(e => e.id).join(',')})`)
@@ -255,7 +248,7 @@ export async function POST(request: NextRequest) {
       match_score: m.match_score
     })))
     
-    const { data: insertedMatches, error: insertError } = await authenticatedSupabase
+    const { data: insertedMatches, error: insertError } = await serviceSupabase
       .from('matches')
       .upsert(allMatches, { 
         onConflict: 'user_free4_id,matched_free4_id',
