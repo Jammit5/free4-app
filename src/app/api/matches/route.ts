@@ -59,107 +59,43 @@ export async function POST(request: NextRequest) {
     const { userId } = await request.json()
     console.log(`🚀 POST /api/matches called for userId: ${userId}`)
     
-    // Debug: Log all headers
-    console.log('🔍 POST: All headers received:')
-    const headerEntries: string[] = []
-    request.headers.forEach((value, key) => {
-      if (key.toLowerCase() === 'authorization') {
-        headerEntries.push(`${key}: ${value.substring(0, 30)}...`)
-      } else {
-        headerEntries.push(`${key}: ${value}`)
-      }
-    })
-    console.log(headerEntries.join(', '))
-    
     if (!userId) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
 
-    // Get the authorization header to validate the user
-    let authHeader = request.headers.get('authorization')
-    
-    // Check forwarded header for the actual user token (Vercel proxy signature)
-    if (!authHeader) {
-      const forwarded = request.headers.get('forwarded')
-      if (forwarded) {
-        const sigMatch = forwarded.match(/sig=([^;]+)/)
-        if (sigMatch) {
-          try {
-            // Decode base64 signature
-            const decodedSig = Buffer.from(sigMatch[1], 'base64').toString('utf-8')
-            console.log(`🔍 POST: Decoded forwarded sig: ${decodedSig.substring(0, 30)}...`)
-            if (decodedSig.startsWith('Bearer ')) {
-              authHeader = decodedSig
-              console.log(`🔍 POST: Found user token in forwarded header: ${!!authHeader}`)
-            }
-          } catch (e) {
-            console.log('🔍 POST: Failed to decode forwarded sig')
-          }
-        }
+    // Use proper Supabase server-side auth (cookies-based)
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value
+          },
+        },
       }
-    }
-    
-    // Fallback: Vercel sometimes puts headers in x-vercel-sc-headers (but this might be internal token)
-    if (!authHeader) {
-      const vercelHeaders = request.headers.get('x-vercel-sc-headers')
-      if (vercelHeaders) {
-        try {
-          const parsedHeaders = JSON.parse(vercelHeaders)
-          authHeader = parsedHeaders.Authorization
-          console.log(`🔍 POST: Found auth header in x-vercel-sc-headers: ${!!authHeader}`)
-        } catch (e) {
-          console.log('🔍 POST: Failed to parse x-vercel-sc-headers')
-        }
-      }
-    }
-    
-    console.log(`🔍 POST: Auth header exists: ${!!authHeader}`)
-    console.log(`🔍 POST: Auth header value: ${authHeader ? authHeader.substring(0, 20) + '...' : 'null'}`)
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('❌ POST: Missing or invalid Authorization header format')
-      return NextResponse.json({ error: 'Authorization header required' }, { status: 401 })
-    }
+    )
 
-    const token = authHeader.substring(7)
-    console.log(`🔍 POST: Extracted token length: ${token.length}`)
+    // Validate user with Supabase (proper way - uses cookies)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      console.error('❌ POST: Auth failed:', authError?.message)
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    
+    if (user.id !== userId) {
+      console.error('❌ POST: User ID mismatch:', { tokenUser: user.id, requestUser: userId })
+      return NextResponse.json({ error: 'User ID mismatch' }, { status: 401 })
+    }
+    
+    console.log('🔐 POST: Validated user:', user.id)
 
-    // Create service client for DB operations (user already validated via JWT)
+    // Create service client for DB operations (user already validated)
     const serviceSupabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
-
-    // Manual JWT token validation (since auth.getUser() doesn't work server-side)
-    let tokenUserId: string
-    try {
-      console.log(`🔍 POST: Starting token validation for userId: ${userId}`)
-      
-      // JWT tokens have 3 parts separated by dots
-      const tokenParts = token.split('.')
-      console.log(`🔍 POST: Token has ${tokenParts.length} parts`)
-      
-      const [, payloadBase64] = tokenParts
-      if (!payloadBase64) {
-        console.log('❌ POST: No payload part in token')
-        throw new Error('Invalid token format')
-      }
-      
-      // Decode the payload
-      const payload = JSON.parse(Buffer.from(payloadBase64, 'base64url').toString())
-      tokenUserId = payload.sub
-      console.log(`🔍 POST: Token userId: ${tokenUserId}, Request userId: ${userId}`)
-      
-      if (!tokenUserId || tokenUserId !== userId) {
-        console.log(`❌ POST: User ID mismatch - token: ${tokenUserId}, request: ${userId}`)
-        throw new Error('User ID mismatch')
-      }
-      
-      console.log('🔐 Validated user from token:', tokenUserId)
-    } catch (error) {
-      console.error('❌ Token validation failed:', error instanceof Error ? error.message : String(error))
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
-    }
 
     const currentTime = new Date().toISOString()
     console.log(`⏰ Current time: ${currentTime}`)
