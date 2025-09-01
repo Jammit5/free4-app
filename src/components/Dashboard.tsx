@@ -250,7 +250,8 @@ export default function Dashboard({ user }: DashboardProps) {
           'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
-          userId: user.id
+          userId: user.id,
+          accessToken: session.access_token
         })
       })
 
@@ -266,7 +267,8 @@ export default function Dashboard({ user }: DashboardProps) {
               'Authorization': `Bearer ${retrySession.access_token}`
             },
             body: JSON.stringify({
-              userId: user.id
+              userId: user.id,
+              accessToken: retrySession.access_token
             })
           })
         }

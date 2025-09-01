@@ -56,21 +56,20 @@ function calculateMatchScore(distance: number, overlapMinutes: number, maxRadius
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await request.json()
+    const { userId, accessToken } = await request.json()
     console.log(`🚀 POST /api/matches called for userId: ${userId}`)
     
     if (!userId) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
 
-    // ROLLBACK: Use the working manual JWT validation until we properly implement cookies
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error('❌ POST: Missing Authorization header')
-      return NextResponse.json({ error: 'Authorization header required' }, { status: 401 })
+    // Use token from request body (Vercel strips Authorization headers)
+    if (!accessToken) {
+      console.error('❌ POST: Missing access token in body')
+      return NextResponse.json({ error: 'Access token required' }, { status: 401 })
     }
 
-    const token = authHeader.substring(7)
+    const token = accessToken
     
     // Manual JWT token validation (temporary rollback)
     let tokenUserId: string
