@@ -39,12 +39,12 @@ export default function Dashboard({ user }: DashboardProps) {
     loadProfile()
     loadEvents()
     loadPendingRequestsCount()
-    // Load existing server-side matches on dashboard load
-    loadServerSideMatches()
   }, [user])
 
   useEffect(() => {
     if (events.length > 0) {
+      // Load server-side matches after events are loaded
+      loadServerSideMatches()
       findMatchesForEvents()
     }
   }, [events])
