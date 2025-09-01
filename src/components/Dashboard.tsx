@@ -243,6 +243,9 @@ export default function Dashboard({ user }: DashboardProps) {
         return // Exit silently
       }
 
+      console.log('🔍 Frontend: Sending POST with accessToken:', !!session.access_token)
+      console.log('🔍 Frontend: Request body will be:', { userId: user.id, accessToken: !!session.access_token })
+
       let response = await fetch('/api/matches', {
         method: 'POST',
         headers: {
