@@ -255,8 +255,8 @@ export default function Dashboard({ user }: DashboardProps) {
         return // Exit silently
       }
 
-      // Call server-side matching API
-      const response = await fetch('/api/matches', {
+      // Call server-side matching API with retry on 401
+      let response = await fetch('/api/matches', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -266,6 +266,24 @@ export default function Dashboard({ user }: DashboardProps) {
           userId: user.id
         })
       })
+
+      // Retry once on 401 (token might have expired during the call)
+      if (response.status === 401) {
+        console.log('🔄 POST got 401, refreshing token and retrying...')
+        const { data: { session: retrySession }, error: retryError } = await supabase.auth.refreshSession()
+        if (!retryError && retrySession) {
+          response = await fetch('/api/matches', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${retrySession.access_token}`
+            },
+            body: JSON.stringify({
+              userId: user.id
+            })
+          })
+        }
+      }
 
       if (!response.ok) {
         console.error('Failed to calculate matches:', response.status, response.statusText)
