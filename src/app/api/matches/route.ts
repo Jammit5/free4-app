@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
     )
 
     // Get all friend events
-    const { data: friendEvents } = await authenticatedSupabase
+    const { data: friendEvents } = await serviceSupabase
       .from('free4_events')
       .select(`
         *,
