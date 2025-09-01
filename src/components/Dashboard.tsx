@@ -236,12 +236,19 @@ export default function Dashboard({ user }: DashboardProps) {
 
   const findMatchesForEvents = async () => {
     try {
-      
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        console.error('No active session for match calculation')
+        return
+      }
+
       // Call server-side matching API
       const response = await fetch('/api/matches', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
           userId: user.id
@@ -249,7 +256,8 @@ export default function Dashboard({ user }: DashboardProps) {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to calculate matches')
+        console.error('Failed to calculate matches:', response.status, response.statusText)
+        return
       }
 
       await response.json()

@@ -41,9 +41,35 @@ CREATE INDEX IF NOT EXISTS idx_matches_created_at ON matches(created_at DESC);
 -- RLS (Row Level Security) policies
 ALTER TABLE matches ENABLE ROW LEVEL SECURITY;
 
--- Users can only see matches for their own Free4s
+-- Users can see matches where they participate (either as user_free4_id OR matched_free4_id)
 CREATE POLICY "Users can view their own matches" ON matches
     FOR SELECT
+    USING (
+        user_free4_id IN (
+            SELECT id FROM free4_events WHERE user_id = auth.uid()
+        )
+        OR
+        matched_free4_id IN (
+            SELECT id FROM free4_events WHERE user_id = auth.uid()
+        )
+    );
+
+-- Users can insert matches for their own Free4s OR where they are the matched party
+CREATE POLICY "Users can insert their own matches" ON matches
+    FOR INSERT
+    WITH CHECK (
+        user_free4_id IN (
+            SELECT id FROM free4_events WHERE user_id = auth.uid()
+        )
+        OR 
+        matched_free4_id IN (
+            SELECT id FROM free4_events WHERE user_id = auth.uid()
+        )
+    );
+
+-- Users can delete matches for their own Free4s
+CREATE POLICY "Users can delete their own matches" ON matches
+    FOR DELETE
     USING (
         user_free4_id IN (
             SELECT id FROM free4_events WHERE user_id = auth.uid()

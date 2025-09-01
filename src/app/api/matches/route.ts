@@ -57,45 +57,101 @@ function calculateMatchScore(distance: number, overlapMinutes: number, maxRadius
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await request.json()
+    console.log(`🚀 POST /api/matches called for userId: ${userId}`)
     
     if (!userId) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
 
+    // Get the authorization header to validate the user
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Authorization header required' }, { status: 401 })
+    }
+
+    const token = authHeader.substring(7)
+
+    // Create authenticated Supabase client with user token
+    const authenticatedSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            authorization: `Bearer ${token}`
+          }
+        }
+      }
+    )
+
+    // Manual JWT token validation (since auth.getUser() doesn't work server-side)
+    let tokenUserId: string
+    try {
+      // JWT tokens have 3 parts separated by dots
+      const [, payloadBase64] = token.split('.')
+      if (!payloadBase64) {
+        throw new Error('Invalid token format')
+      }
+      
+      // Decode the payload
+      const payload = JSON.parse(Buffer.from(payloadBase64, 'base64url').toString())
+      tokenUserId = payload.sub
+      
+      if (!tokenUserId || tokenUserId !== userId) {
+        throw new Error('User ID mismatch')
+      }
+      
+      console.log('🔐 Validated user from token:', tokenUserId)
+    } catch (error) {
+      console.error('❌ Token validation failed:', error instanceof Error ? error.message : String(error))
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+
     const currentTime = new Date().toISOString()
+    console.log(`⏰ Current time: ${currentTime}`)
     
-    // Get all user's Free4 events
-    const { data: userEvents, error: userEventsError } = await supabase
+    // Get all user's Free4 events using authenticated client
+    console.log(`🔍 Searching for events with userId: ${userId}, after: ${currentTime}`)
+    const { data: userEvents, error: userEventsError } = await authenticatedSupabase
       .from('free4_events')
       .select('*')
       .eq('user_id', userId)
       .gte('end_time', currentTime) // Only future events
     
     if (userEventsError) {
+      console.error('❌ Error fetching user events:', userEventsError)
       return NextResponse.json({ error: 'Failed to fetch user events' }, { status: 500 })
     }
 
+    console.log(`📅 Found ${userEvents?.length || 0} user events`)
+    if (userEvents && userEvents.length > 0) {
+      console.log('📝 User events:', userEvents.map(e => ({ id: e.id, title: e.title, end_time: e.end_time })))
+    }
+
     if (!userEvents || userEvents.length === 0) {
+      console.log('⚠️ No future events found for user')
       return NextResponse.json({ matches: [], message: 'No future events found' })
     }
 
     // Get user's friends
-    const { data: friendships } = await supabase
+    const { data: friendships } = await authenticatedSupabase
       .from('friendships')
       .select('requester_id, addressee_id')
       .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`)
       .eq('status', 'accepted')
 
     if (!friendships || friendships.length === 0) {
+      console.log('👥 No friends found')
       return NextResponse.json({ matches: [], message: 'No friends found' })
     }
 
+    console.log(`👥 Found ${friendships.length} friendships`)
     const friendIds = friendships.map(f => 
       f.requester_id === userId ? f.addressee_id : f.requester_id
     )
 
     // Get all friend events
-    const { data: friendEvents } = await supabase
+    const { data: friendEvents } = await authenticatedSupabase
       .from('free4_events')
       .select(`
         *,
@@ -105,8 +161,11 @@ export async function POST(request: NextRequest) {
       .gte('end_time', new Date().toISOString()) // Only future events
 
     if (!friendEvents || friendEvents.length === 0) {
+      console.log('📅 No friend events found')
       return NextResponse.json({ matches: [], message: 'No friend events found' })
     }
+
+    console.log(`📅 Found ${friendEvents.length} friend events`)
 
 
     // Calculate all matches
@@ -149,10 +208,13 @@ export async function POST(request: NextRequest) {
         const meetingLat = (userEvent.latitude + friendEvent.latitude) / 2
         const meetingLng = (userEvent.longitude + friendEvent.longitude) / 2
 
-        // Create bidirectional matches - one for each user
-        const match1 = {
-          user_free4_id: userEvent.id,
-          matched_free4_id: friendEvent.id,
+        // Create unidirectional match - only one per pair (consistent order)
+        // Always use the smaller ID as user_free4_id for consistency
+        const [smallerId, largerId] = [userEvent.id, friendEvent.id].sort()
+        
+        const match = {
+          user_free4_id: smallerId,
+          matched_free4_id: largerId,
           match_score: matchScore,
           overlap_start: timeOverlap.start,
           overlap_end: timeOverlap.end,
@@ -163,36 +225,37 @@ export async function POST(request: NextRequest) {
           status: 'active'
         }
 
-        const match2 = {
-          user_free4_id: friendEvent.id,
-          matched_free4_id: userEvent.id,
-          match_score: matchScore,
-          overlap_start: timeOverlap.start,
-          overlap_end: timeOverlap.end,
-          overlap_duration_minutes: timeOverlap.minutes,
-          distance_km: Math.round(distance * 100) / 100,
-          meeting_point_lat: meetingLat,
-          meeting_point_lng: meetingLng,
-          status: 'active'
-        }
-
-        allMatches.push(match1, match2)
+        allMatches.push(match)
       }
     }
 
+
+    console.log(`🔄 Found ${allMatches.length} potential matches`)
 
     if (allMatches.length === 0) {
       return NextResponse.json({ matches: [], message: 'No matches found' })
     }
 
     // Clear existing matches for this user (both directions)
-    await supabase
+    console.log('🗑️ Clearing existing matches...')
+    const { error: deleteError } = await authenticatedSupabase
       .from('matches')
       .delete()
       .or(`user_free4_id.in.(${userEvents.map(e => e.id).join(',')}),matched_free4_id.in.(${userEvents.map(e => e.id).join(',')})`)
 
+    if (deleteError) {
+      console.error('Error deleting old matches:', deleteError)
+    }
+
     // Insert new matches with upsert to handle duplicates
-    const { data: insertedMatches, error: insertError } = await supabase
+    console.log('💾 Inserting new matches...')
+    console.log('📋 Matches to insert:', allMatches.map(m => ({
+      user_free4_id: m.user_free4_id,
+      matched_free4_id: m.matched_free4_id,
+      match_score: m.match_score
+    })))
+    
+    const { data: insertedMatches, error: insertError } = await authenticatedSupabase
       .from('matches')
       .upsert(allMatches, { 
         onConflict: 'user_free4_id,matched_free4_id',
@@ -204,6 +267,8 @@ export async function POST(request: NextRequest) {
       console.error('Error upserting matches:', insertError)
       return NextResponse.json({ error: 'Failed to save matches' }, { status: 500 })
     }
+
+    console.log(`✅ Successfully inserted ${insertedMatches?.length || 0} matches`)
 
     return NextResponse.json({ 
       matches: insertedMatches,
