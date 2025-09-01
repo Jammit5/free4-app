@@ -149,7 +149,8 @@ export async function POST(request: NextRequest) {
         const meetingLat = (userEvent.latitude + friendEvent.latitude) / 2
         const meetingLng = (userEvent.longitude + friendEvent.longitude) / 2
 
-        const match = {
+        // Create bidirectional matches - one for each user
+        const match1 = {
           user_free4_id: userEvent.id,
           matched_free4_id: friendEvent.id,
           match_score: matchScore,
@@ -162,7 +163,20 @@ export async function POST(request: NextRequest) {
           status: 'active'
         }
 
-        allMatches.push(match)
+        const match2 = {
+          user_free4_id: friendEvent.id,
+          matched_free4_id: userEvent.id,
+          match_score: matchScore,
+          overlap_start: timeOverlap.start,
+          overlap_end: timeOverlap.end,
+          overlap_duration_minutes: timeOverlap.minutes,
+          distance_km: Math.round(distance * 100) / 100,
+          meeting_point_lat: meetingLat,
+          meeting_point_lng: meetingLng,
+          status: 'active'
+        }
+
+        allMatches.push(match1, match2)
       }
     }
 
@@ -171,11 +185,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ matches: [], message: 'No matches found' })
     }
 
-    // Clear existing matches for this user
+    // Clear existing matches for this user (both directions)
     await supabase
       .from('matches')
       .delete()
-      .in('user_free4_id', userEvents.map(e => e.id))
+      .or(`user_free4_id.in.(${userEvents.map(e => e.id).join(',')}),matched_free4_id.in.(${userEvents.map(e => e.id).join(',')})`)
 
     // Insert new matches with upsert to handle duplicates
     const { data: insertedMatches, error: insertError } = await supabase
