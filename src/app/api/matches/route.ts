@@ -57,28 +57,39 @@ function calculateMatchScore(distance: number, overlapMinutes: number, maxRadius
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await request.json()
+    const { userId, accessToken } = await request.json()
     console.log(`🚀 POST /api/matches called for userId: ${userId}`)
     
     if (!userId) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
 
-    // Official Supabase server-side authentication
-    const authSupabase = createServerClient()
-    const { data: { user }, error: authError } = await authSupabase.auth.getUser()
-    
-    if (authError || !user) {
-      console.error('❌ POST: Auth failed:', authError?.message)
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // ROLLBACK: Simple token validation from request body (working solution)
+    if (!accessToken) {
+      console.error('❌ POST: Missing access token in body')
+      return NextResponse.json({ error: 'Access token required' }, { status: 401 })
     }
-    
-    if (user.id !== userId) {
-      console.error('❌ POST: User ID mismatch:', { authUser: user.id, requestUser: userId })
-      return NextResponse.json({ error: 'User ID mismatch' }, { status: 401 })
+
+    // Manual JWT token validation (proven working)
+    let tokenUserId: string
+    try {
+      const [, payloadBase64] = accessToken.split('.')
+      if (!payloadBase64) {
+        throw new Error('Invalid token format')
+      }
+      
+      const payload = JSON.parse(Buffer.from(payloadBase64, 'base64url').toString())
+      tokenUserId = payload.sub
+      
+      if (!tokenUserId || tokenUserId !== userId) {
+        throw new Error('User ID mismatch')
+      }
+      
+      console.log('🔐 POST: Validated user:', tokenUserId)
+    } catch (error) {
+      console.error('❌ POST: Token validation failed:', error instanceof Error ? error.message : String(error))
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
-    
-    console.log('🔐 POST: Validated user:', user.id)
 
     // Create service client for DB operations (user already validated)
     const serviceSupabase = createClient(

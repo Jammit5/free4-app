@@ -236,29 +236,37 @@ export default function Dashboard({ user }: DashboardProps) {
 
   const findMatchesForEvents = async () => {
     try {
-      // Official Supabase approach - cookies are handled automatically
+      // ROLLBACK: Get session token and send in body (stable solution)
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError || !session || !session.access_token) {
+        console.error('No active session:', sessionError)
+        return // Exit silently
+      }
+
       let response = await fetch('/api/matches', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          userId: user.id
+          userId: user.id,
+          accessToken: session.access_token
         })
       })
 
       // Retry once on 401 (session might have expired)
       if (response.status === 401) {
         console.log('🔄 POST got 401, refreshing session and retrying...')
-        const { error: refreshError } = await supabase.auth.refreshSession()
-        if (!refreshError) {
+        const { data: { session: retrySession }, error: refreshError } = await supabase.auth.refreshSession()
+        if (!refreshError && retrySession) {
           response = await fetch('/api/matches', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              userId: user.id
+              userId: user.id,
+              accessToken: retrySession.access_token
             })
           })
         }
