@@ -340,11 +340,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ matches: [] })
     }
 
-    // Get matches using the view with proper RLS
+    // Get matches using the view with proper RLS (bidirectional search)
+    const userEventIds = userEvents.map(e => e.id)
     const { data: matches, error } = await authenticatedSupabase
       .from('match_details')
       .select('*')
-      .in('user_free4_id', userEvents.map(e => e.id))
+      .or(`user_free4_id.in.(${userEventIds.join(',')}),matched_free4_id.in.(${userEventIds.join(',')})`)
       .eq('status', 'active')
       .order('match_score', { ascending: false })
 
