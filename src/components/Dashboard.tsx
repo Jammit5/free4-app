@@ -238,10 +238,12 @@ export default function Dashboard({ user }: DashboardProps) {
     try {
       // Get the current session token (don't refresh proactively to avoid rate limits)
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !session) {
-        console.error('No active session:', sessionError)
+      if (sessionError || !session || !session.access_token) {
+        console.error('No active session or missing token:', { sessionError, hasSession: !!session, hasToken: !!session?.access_token })
         return // Exit silently
       }
+      
+      console.log('🔍 Frontend: Using token for POST:', session.access_token.substring(0, 20) + '...')
 
       // Call server-side matching API with retry on 401
       let response = await fetch('/api/matches', {
