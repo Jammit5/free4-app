@@ -80,17 +80,25 @@ export async function POST(request: NextRequest) {
     // Manual JWT token validation (since auth.getUser() doesn't work server-side)
     let tokenUserId: string
     try {
+      console.log(`🔍 POST: Starting token validation for userId: ${userId}`)
+      
       // JWT tokens have 3 parts separated by dots
-      const [, payloadBase64] = token.split('.')
+      const tokenParts = token.split('.')
+      console.log(`🔍 POST: Token has ${tokenParts.length} parts`)
+      
+      const [, payloadBase64] = tokenParts
       if (!payloadBase64) {
+        console.log('❌ POST: No payload part in token')
         throw new Error('Invalid token format')
       }
       
       // Decode the payload
       const payload = JSON.parse(Buffer.from(payloadBase64, 'base64url').toString())
       tokenUserId = payload.sub
+      console.log(`🔍 POST: Token userId: ${tokenUserId}, Request userId: ${userId}`)
       
       if (!tokenUserId || tokenUserId !== userId) {
+        console.log(`❌ POST: User ID mismatch - token: ${tokenUserId}, request: ${userId}`)
         throw new Error('User ID mismatch')
       }
       
