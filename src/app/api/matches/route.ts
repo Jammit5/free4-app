@@ -215,8 +215,29 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
 
+    // Get the authorization header
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Authorization header required' }, { status: 401 })
+    }
+
+    const token = authHeader.substring(7) // Remove 'Bearer ' prefix
+
+    // Create authenticated Supabase client with the user's token
+    const authenticatedSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            authorization: `Bearer ${token}`
+          }
+        }
+      }
+    )
+
     // Get user's Free4 events
-    const { data: userEvents } = await supabase
+    const { data: userEvents } = await authenticatedSupabase
       .from('free4_events')
       .select('id')
       .eq('user_id', userId)
@@ -225,27 +246,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ matches: [] })
     }
 
-    // Get matches with manual joins to avoid RLS issues with views
-    const { data: matches, error } = await supabase
-      .from('matches')
-      .select(`
-        *,
-        matched_free4:free4_events!matched_free4_id(
-          *,
-          profile:profiles(*)
-        )
-      `)
+    // Get matches using the view with proper RLS
+    const { data: matches, error } = await authenticatedSupabase
+      .from('match_details')
+      .select('*')
       .in('user_free4_id', userEvents.map(e => e.id))
       .eq('status', 'active')
       .order('match_score', { ascending: false })
 
     if (error) {
+      console.error('Failed to fetch matches:', error)
       return NextResponse.json({ error: 'Failed to fetch matches' }, { status: 500 })
     }
 
     return NextResponse.json({ matches: matches || [] })
 
   } catch (error) {
+    console.error('GET matches error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

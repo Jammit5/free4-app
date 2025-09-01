@@ -66,8 +66,10 @@ CREATE TRIGGER trigger_update_matches_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_matches_updated_at();
 
--- View for easier querying with user data
-CREATE OR REPLACE VIEW match_details AS
+-- View for easier querying with user data (Security Invoker to respect RLS)
+CREATE OR REPLACE VIEW match_details 
+WITH (security_invoker = true)
+AS
 SELECT 
     m.*,
     -- User Free4 data

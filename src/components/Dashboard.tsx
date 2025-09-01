@@ -263,9 +263,33 @@ export default function Dashboard({ user }: DashboardProps) {
 
   const loadServerSideMatches = async () => {
     try {
-      const response = await fetch(`/api/matches?userId=${user.id}`)
+      // Get the current session token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) {
+        console.error('Session error:', sessionError)
+        // Try to refresh the session
+        const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession()
+        if (refreshError || !refreshedSession) {
+          console.error('Failed to refresh session:', refreshError)
+          return // Exit silently - user might need to re-login
+        }
+        // Use refreshed session
+      }
+      
+      const currentSession = session
+      if (!currentSession) {
+        console.log('No active session for loading matches')
+        return // Exit silently
+      }
+
+      const response = await fetch(`/api/matches?userId=${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${currentSession.access_token}`
+        }
+      })
       if (!response.ok) {
-        throw new Error('Failed to load matches')
+        console.error('Failed to load matches:', response.status, response.statusText)
+        return // Exit silently on API error
       }
 
       const result = await response.json()
@@ -273,7 +297,7 @@ export default function Dashboard({ user }: DashboardProps) {
       // Transform server matches to the format expected by the UI
       const matches: {[eventId: string]: any[]} = {}
 
-      // Transform server matches with direct table access
+      // Transform server matches from match_details view
       result.matches?.forEach((match: any) => {
         if (!matches[match.user_free4_id]) {
           matches[match.user_free4_id] = []
@@ -282,17 +306,17 @@ export default function Dashboard({ user }: DashboardProps) {
         matches[match.user_free4_id].push({
           friendEvent: {
             id: match.matched_free4_id,
-            title: match.matched_free4?.title,
-            start_time: match.matched_free4?.start_time,
-            end_time: match.matched_free4?.end_time,
-            location_name: match.matched_free4?.location_name,
-            latitude: match.matched_free4?.latitude,
-            longitude: match.matched_free4?.longitude,
-            radius_km: match.matched_free4?.radius_km
+            title: match.matched_title,
+            start_time: match.matched_start_time,
+            end_time: match.matched_end_time,
+            location_name: match.matched_location_name,
+            latitude: match.matched_latitude,
+            longitude: match.matched_longitude,
+            radius_km: match.matched_radius_km
           },
           profile: {
-            full_name: match.matched_free4?.profile?.full_name,
-            avatar_url: match.matched_free4?.profile?.avatar_url
+            full_name: match.matched_name,
+            avatar_url: match.matched_avatar_url
           },
           overlapStart: match.overlap_start,
           overlapEnd: match.overlap_end,
