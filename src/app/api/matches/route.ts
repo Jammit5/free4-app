@@ -302,6 +302,27 @@ export async function GET(request: NextRequest) {
 
     const token = authHeader.substring(7) // Remove 'Bearer ' prefix
 
+    // Manual JWT token validation (same as POST route)
+    let tokenUserId: string
+    try {
+      const [, payloadBase64] = token.split('.')
+      if (!payloadBase64) {
+        throw new Error('Invalid token format')
+      }
+      
+      const payload = JSON.parse(Buffer.from(payloadBase64, 'base64url').toString())
+      tokenUserId = payload.sub
+      
+      if (!tokenUserId || tokenUserId !== userId) {
+        throw new Error('User ID mismatch')
+      }
+      
+      console.log('🔐 GET: Validated user from token:', tokenUserId)
+    } catch (error) {
+      console.error('❌ GET: Token validation failed:', error instanceof Error ? error.message : String(error))
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+
     // Create authenticated Supabase client with the user's token
     const authenticatedSupabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
