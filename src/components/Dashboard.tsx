@@ -306,11 +306,19 @@ export default function Dashboard({ user }: DashboardProps) {
       const matches: {[eventId: string]: any[]} = {}
 
       // Transform server matches from match_details view (bidirectional)
+      console.log('🔄 Frontend: Processing server matches:', result.matches?.length || 0)
+      console.log('🔄 Frontend: Current user events:', events.map(e => ({ id: e.id, title: e.title })))
+      
       result.matches?.forEach((match: any) => {
         // Check which event belongs to current user
         const userEvents = events.map(e => e.id)
         const isUserFree4 = userEvents.includes(match.user_free4_id)
         const isMatchedFree4 = userEvents.includes(match.matched_free4_id)
+        
+        console.log(`🔍 Frontend: Match ${match.id}:`)
+        console.log(`   - user_free4_id: ${match.user_free4_id} (isUserFree4: ${isUserFree4})`)
+        console.log(`   - matched_free4_id: ${match.matched_free4_id} (isMatchedFree4: ${isMatchedFree4})`)
+        console.log(`   - userEventIds:`, userEvents)
         
         if (isUserFree4) {
           // Current user's event is user_free4_id
@@ -369,6 +377,8 @@ export default function Dashboard({ user }: DashboardProps) {
         }
       })
 
+      console.log('✅ Frontend: Final matches to set:', matches)
+      console.log('✅ Frontend: Number of events with matches:', Object.keys(matches).length)
       setEventMatches(matches)
 
     } catch (error) {
