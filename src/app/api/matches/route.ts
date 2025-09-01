@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createClient as createServerClient } from '@/utils/supabase/server'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -56,44 +57,28 @@ function calculateMatchScore(distance: number, overlapMinutes: number, maxRadius
 
 export async function POST(request: NextRequest) {
   try {
-    const requestBody = await request.json()
-    const { userId, accessToken } = requestBody
+    const { userId } = await request.json()
     console.log(`🚀 POST /api/matches called for userId: ${userId}`)
-    console.log(`🔍 POST: Request body keys:`, Object.keys(requestBody))
-    console.log(`🔍 POST: accessToken present:`, !!accessToken)
     
     if (!userId) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
 
-    // Use token from request body (Vercel strips Authorization headers)
-    if (!accessToken) {
-      console.error('❌ POST: Missing access token in body')
-      return NextResponse.json({ error: 'Access token required' }, { status: 401 })
-    }
-
-    const token = accessToken
+    // Official Supabase server-side authentication
+    const authSupabase = createServerClient()
+    const { data: { user }, error: authError } = await authSupabase.auth.getUser()
     
-    // Manual JWT token validation (temporary rollback)
-    let tokenUserId: string
-    try {
-      const [, payloadBase64] = token.split('.')
-      if (!payloadBase64) {
-        throw new Error('Invalid token format')
-      }
-      
-      const payload = JSON.parse(Buffer.from(payloadBase64, 'base64url').toString())
-      tokenUserId = payload.sub
-      
-      if (!tokenUserId || tokenUserId !== userId) {
-        throw new Error('User ID mismatch')
-      }
-      
-      console.log('🔐 POST: Validated user:', tokenUserId)
-    } catch (error) {
-      console.error('❌ POST: Token validation failed:', error instanceof Error ? error.message : String(error))
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    if (authError || !user) {
+      console.error('❌ POST: Auth failed:', authError?.message)
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    
+    if (user.id !== userId) {
+      console.error('❌ POST: User ID mismatch:', { authUser: user.id, requestUser: userId })
+      return NextResponse.json({ error: 'User ID mismatch' }, { status: 401 })
+    }
+    
+    console.log('🔐 POST: Validated user:', user.id)
 
     // Create service client for DB operations (user already validated)
     const serviceSupabase = createClient(

@@ -236,42 +236,29 @@ export default function Dashboard({ user }: DashboardProps) {
 
   const findMatchesForEvents = async () => {
     try {
-      // ROLLBACK: Get session token manually until cookie implementation is fixed
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !session || !session.access_token) {
-        console.error('No active session:', { sessionError, hasSession: !!session })
-        return // Exit silently
-      }
-
-      console.log('🔍 Frontend: Sending POST with accessToken:', !!session.access_token)
-      console.log('🔍 Frontend: Request body will be:', { userId: user.id, accessToken: !!session.access_token })
-
+      // Official Supabase approach - cookies are handled automatically
       let response = await fetch('/api/matches', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          userId: user.id,
-          accessToken: session.access_token
+          userId: user.id
         })
       })
 
-      // Retry once on 401 (token might have expired during the call)
+      // Retry once on 401 (session might have expired)
       if (response.status === 401) {
-        console.log('🔄 POST got 401, refreshing token and retrying...')
-        const { data: { session: retrySession }, error: retryError } = await supabase.auth.refreshSession()
-        if (!retryError && retrySession) {
+        console.log('🔄 POST got 401, refreshing session and retrying...')
+        const { error: refreshError } = await supabase.auth.refreshSession()
+        if (!refreshError) {
           response = await fetch('/api/matches', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${retrySession.access_token}`
+              'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              userId: user.id,
-              accessToken: retrySession.access_token
+              userId: user.id
             })
           })
         }
