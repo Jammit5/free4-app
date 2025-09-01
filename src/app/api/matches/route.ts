@@ -273,8 +273,7 @@ export async function POST(request: NextRequest) {
     console.error('❌ Stack trace:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json({ 
       error: 'Internal server error',
-      details: error instanceof Error ? error.message : String(error),
-      userId: userId
+      details: error instanceof Error ? error.message : String(error)
     }, { status: 500 })
   }
 }
