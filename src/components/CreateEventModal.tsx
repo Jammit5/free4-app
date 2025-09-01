@@ -186,15 +186,24 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
 
       // Trigger automatic re-matching after creating/updating a Free4
       try {
-        await fetch('/api/matches', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: user.id
+        // Proactive session refresh before POST request
+        await supabase.auth.getSession()
+        
+        const { data: { session } } = await supabase.auth.getSession()
+        const token = session?.access_token
+        
+        if (token) {
+          await fetch('/api/matches', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              userId: user.id
+            })
           })
-        })
+        }
       } catch (matchError) {
         // Silent error handling - Free4 was created successfully
       }

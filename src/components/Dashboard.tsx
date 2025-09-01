@@ -43,9 +43,9 @@ export default function Dashboard({ user }: DashboardProps) {
 
   useEffect(() => {
     if (events.length > 0) {
-      // Load server-side matches after events are loaded
+      // Only load server-side matches after events are loaded
+      // Match calculation happens explicitly on save/delete/5min-interval
       loadServerSideMatches()
-      findMatchesForEvents()
     }
   }, [events])
 
@@ -197,6 +197,9 @@ export default function Dashboard({ user }: DashboardProps) {
       setTimeout(() => {
         setShowDeleteToast(false)
       }, 2000)
+
+      // Trigger match calculation after deleting Free4
+      await findMatchesForEvents()
     } catch (error: any) {
       console.error('Error deleting free4:', error)
     }
@@ -227,14 +230,16 @@ export default function Dashboard({ user }: DashboardProps) {
 
   const findMatchesForEvents = async () => {
     try {
-      // Use token-based authentication like GET requests
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        console.log('No active session for matches')
+      // Proactively refresh session before POST to avoid 401s
+      console.log('🔄 Refreshing session before match check...')
+      const { data: { session }, error: refreshError } = await supabase.auth.refreshSession()
+      
+      if (refreshError || !session) {
+        console.log('No active session after refresh for matches:', refreshError?.message)
         return
       }
 
-      let response = await fetch('/api/matches', {
+      const response = await fetch('/api/matches', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -244,24 +249,6 @@ export default function Dashboard({ user }: DashboardProps) {
           userId: user.id
         })
       })
-
-      // Retry once on 401 (session might have expired)
-      if (response.status === 401) {
-        console.log('🔄 POST got 401, refreshing session and retrying...')
-        const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession()
-        if (!refreshError && refreshedSession) {
-          response = await fetch('/api/matches', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${refreshedSession.access_token}`
-            },
-            body: JSON.stringify({
-              userId: user.id
-            })
-          })
-        }
-      }
 
       if (!response.ok) {
         console.error('Failed to calculate matches:', response.status, response.statusText)
