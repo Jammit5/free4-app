@@ -7,7 +7,8 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "WebSearch",
-      "WebFetch(domain:supabase.com)"
+      "WebFetch(domain:supabase.com)",
+      "WebFetch(domain:www.npmjs.com)"
     ],
     "deny": [],
     "ask": []
