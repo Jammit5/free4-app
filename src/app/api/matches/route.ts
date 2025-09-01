@@ -276,10 +276,12 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Match calculation error:', error)
+    console.error('❌ POST Match calculation error:', error)
+    console.error('❌ Stack trace:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json({ 
       error: 'Internal server error',
-      details: error instanceof Error ? error.message : String(error)
+      details: error instanceof Error ? error.message : String(error),
+      userId: userId
     }, { status: 500 })
   }
 }
@@ -362,7 +364,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ matches: matches || [] })
 
   } catch (error) {
-    console.error('GET matches error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('❌ GET matches error:', error)
+    console.error('❌ GET Stack trace:', error instanceof Error ? error.stack : 'No stack trace')
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 })
   }
 }
