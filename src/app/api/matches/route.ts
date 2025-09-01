@@ -65,14 +65,11 @@ export async function POST(request: NextRequest) {
 
     // Get the authorization header to validate the user
     const authHeader = request.headers.get('authorization')
-    console.log(`🔍 POST: Auth header present: ${!!authHeader}`)
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('❌ POST: Missing or invalid auth header format')
       return NextResponse.json({ error: 'Authorization header required' }, { status: 401 })
     }
 
     const token = authHeader.substring(7)
-    console.log(`🔍 POST: Token length: ${token.length}, starts with: ${token.substring(0, 20)}...`)
 
     // Create service client for DB operations (user already validated via JWT)
     const serviceSupabase = createClient(
