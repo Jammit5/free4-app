@@ -224,49 +224,40 @@ export default function Dashboard({ user }: DashboardProps) {
     setEditingEvent(null)
   }
 
-  const handleManualMatchCheck = async () => {
-    setIsRefreshingMatches(true)
-    try {
-      console.log('🔄 Manual match check triggered')
-      await findMatchesForEvents()
-    } finally {
-      setIsRefreshingMatches(false)
-    }
-  }
 
   const findMatchesForEvents = async () => {
     try {
-      // ROLLBACK: Get session token and send in body (stable solution)
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !session || !session.access_token) {
-        console.error('No active session:', sessionError)
-        return // Exit silently
+      // Use token-based authentication like GET requests
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        console.log('No active session for matches')
+        return
       }
 
       let response = await fetch('/api/matches', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
-          userId: user.id,
-          accessToken: session.access_token
+          userId: user.id
         })
       })
 
       // Retry once on 401 (session might have expired)
       if (response.status === 401) {
         console.log('🔄 POST got 401, refreshing session and retrying...')
-        const { data: { session: retrySession }, error: refreshError } = await supabase.auth.refreshSession()
-        if (!refreshError && retrySession) {
+        const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession()
+        if (!refreshError && refreshedSession) {
           response = await fetch('/api/matches', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${refreshedSession.access_token}`
             },
             body: JSON.stringify({
-              userId: user.id,
-              accessToken: retrySession.access_token
+              userId: user.id
             })
           })
         }
@@ -482,14 +473,6 @@ export default function Dashboard({ user }: DashboardProps) {
             <p className="text-sm text-gray-600">Hey {profile?.full_name || 'User'}!</p>
           </div>
           <div className="flex items-center space-x-4">
-            <button 
-              onClick={handleManualMatchCheck}
-              disabled={isRefreshingMatches}
-              className="p-2 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50 disabled:opacity-50"
-              title="Matches manuell prüfen (Test)"
-            >
-              <RefreshCw size={16} className={isRefreshingMatches ? 'animate-spin' : ''} />
-            </button>
             <button 
               onClick={() => setShowProfileModal(true)}
               className="p-2 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"

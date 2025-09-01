@@ -57,23 +57,26 @@ function calculateMatchScore(distance: number, overlapMinutes: number, maxRadius
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, accessToken } = await request.json()
+    const { userId } = await request.json()
     console.log(`🚀 POST /api/matches called for userId: ${userId}`)
+    
     
     if (!userId) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
 
-    // ROLLBACK: Simple token validation from request body (working solution)
-    if (!accessToken) {
-      console.error('❌ POST: Missing access token in body')
-      return NextResponse.json({ error: 'Access token required' }, { status: 401 })
+    // Use same token-based authentication as GET route
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Authorization header required' }, { status: 401 })
     }
 
-    // Manual JWT token validation (proven working)
+    const token = authHeader.substring(7) // Remove 'Bearer ' prefix
+
+    // Manual JWT token validation (same as GET route)
     let tokenUserId: string
     try {
-      const [, payloadBase64] = accessToken.split('.')
+      const [, payloadBase64] = token.split('.')
       if (!payloadBase64) {
         throw new Error('Invalid token format')
       }
@@ -85,7 +88,7 @@ export async function POST(request: NextRequest) {
         throw new Error('User ID mismatch')
       }
       
-      console.log('🔐 POST: Validated user:', tokenUserId)
+      console.log('🔐 POST: Validated user from token:', tokenUserId)
     } catch (error) {
       console.error('❌ POST: Token validation failed:', error instanceof Error ? error.message : String(error))
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
