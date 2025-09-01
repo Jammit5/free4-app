@@ -342,17 +342,12 @@ export async function GET(request: NextRequest) {
 
     // Get matches using the view with proper RLS (bidirectional search)
     const userEventIds = userEvents.map(e => e.id)
-    console.log(`🔍 GET: Searching for matches with user event IDs:`, userEventIds)
-    
     const { data: matches, error } = await authenticatedSupabase
       .from('match_details')
       .select('*')
       .or(`user_free4_id.in.(${userEventIds.join(',')}),matched_free4_id.in.(${userEventIds.join(',')})`)
       .eq('status', 'active')
       .order('match_score', { ascending: false })
-    
-    console.log(`📊 GET: Found ${matches?.length || 0} matches for user ${userId}`)
-    console.log(`📋 GET: Matches data:`, matches)
 
     if (error) {
       console.error('Failed to fetch matches:', error)
