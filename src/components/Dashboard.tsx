@@ -236,26 +236,34 @@ export default function Dashboard({ user }: DashboardProps) {
 
   const findMatchesForEvents = async () => {
     try {
-      // Supabase automatically handles auth via cookies - no manual token needed!
+      // ROLLBACK: Get session token manually until cookie implementation is fixed
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError || !session || !session.access_token) {
+        console.error('No active session:', { sessionError, hasSession: !!session })
+        return // Exit silently
+      }
+
       let response = await fetch('/api/matches', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
           userId: user.id
         })
       })
 
-      // Retry once on 401 (session might have expired)
+      // Retry once on 401 (token might have expired during the call)
       if (response.status === 401) {
-        console.log('🔄 POST got 401, refreshing session and retrying...')
-        const { error: refreshError } = await supabase.auth.refreshSession()
-        if (!refreshError) {
+        console.log('🔄 POST got 401, refreshing token and retrying...')
+        const { data: { session: retrySession }, error: retryError } = await supabase.auth.refreshSession()
+        if (!retryError && retrySession) {
           response = await fetch('/api/matches', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${retrySession.access_token}`
             },
             body: JSON.stringify({
               userId: user.id

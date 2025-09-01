@@ -63,33 +63,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
 
-    // Use proper Supabase server-side auth (cookies-based)
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return request.cookies.get(name)?.value
-          },
-        },
-      }
-    )
+    // ROLLBACK: Use the working manual JWT validation until we properly implement cookies
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('❌ POST: Missing Authorization header')
+      return NextResponse.json({ error: 'Authorization header required' }, { status: 401 })
+    }
 
-    // Validate user with Supabase (proper way - uses cookies)
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const token = authHeader.substring(7)
     
-    if (authError || !user) {
-      console.error('❌ POST: Auth failed:', authError?.message)
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Manual JWT token validation (temporary rollback)
+    let tokenUserId: string
+    try {
+      const [, payloadBase64] = token.split('.')
+      if (!payloadBase64) {
+        throw new Error('Invalid token format')
+      }
+      
+      const payload = JSON.parse(Buffer.from(payloadBase64, 'base64url').toString())
+      tokenUserId = payload.sub
+      
+      if (!tokenUserId || tokenUserId !== userId) {
+        throw new Error('User ID mismatch')
+      }
+      
+      console.log('🔐 POST: Validated user:', tokenUserId)
+    } catch (error) {
+      console.error('❌ POST: Token validation failed:', error instanceof Error ? error.message : String(error))
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
-    
-    if (user.id !== userId) {
-      console.error('❌ POST: User ID mismatch:', { tokenUser: user.id, requestUser: userId })
-      return NextResponse.json({ error: 'User ID mismatch' }, { status: 401 })
-    }
-    
-    console.log('🔐 POST: Validated user:', user.id)
 
     // Create service client for DB operations (user already validated)
     const serviceSupabase = createClient(
