@@ -236,10 +236,10 @@ export default function Dashboard({ user }: DashboardProps) {
 
   const findMatchesForEvents = async () => {
     try {
-      // Always refresh session before match calculation to prevent 401s
-      const { data: { session: freshSession }, error: sessionError } = await supabase.auth.refreshSession()
-      if (sessionError || !freshSession) {
-        console.error('Failed to get fresh session:', sessionError)
+      // Get the current session token (don't refresh proactively to avoid rate limits)
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError || !session) {
+        console.error('No active session:', sessionError)
         return // Exit silently
       }
 
@@ -248,7 +248,7 @@ export default function Dashboard({ user }: DashboardProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${freshSession.access_token}`
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
           userId: user.id
