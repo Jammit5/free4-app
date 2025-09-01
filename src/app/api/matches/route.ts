@@ -56,8 +56,11 @@ function calculateMatchScore(distance: number, overlapMinutes: number, maxRadius
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, accessToken } = await request.json()
+    const requestBody = await request.json()
+    const { userId, accessToken } = requestBody
     console.log(`🚀 POST /api/matches called for userId: ${userId}`)
+    console.log(`🔍 POST: Request body keys:`, Object.keys(requestBody))
+    console.log(`🔍 POST: accessToken present:`, !!accessToken)
     
     if (!userId) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
