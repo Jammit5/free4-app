@@ -78,7 +78,28 @@ export async function POST(request: NextRequest) {
     // Get the authorization header to validate the user
     let authHeader = request.headers.get('authorization')
     
-    // Vercel sometimes puts headers in x-vercel-sc-headers
+    // Check forwarded header for the actual user token (Vercel proxy signature)
+    if (!authHeader) {
+      const forwarded = request.headers.get('forwarded')
+      if (forwarded) {
+        const sigMatch = forwarded.match(/sig=([^;]+)/)
+        if (sigMatch) {
+          try {
+            // Decode base64 signature
+            const decodedSig = Buffer.from(sigMatch[1], 'base64').toString('utf-8')
+            console.log(`🔍 POST: Decoded forwarded sig: ${decodedSig.substring(0, 30)}...`)
+            if (decodedSig.startsWith('Bearer ')) {
+              authHeader = decodedSig
+              console.log(`🔍 POST: Found user token in forwarded header: ${!!authHeader}`)
+            }
+          } catch (e) {
+            console.log('🔍 POST: Failed to decode forwarded sig')
+          }
+        }
+      }
+    }
+    
+    // Fallback: Vercel sometimes puts headers in x-vercel-sc-headers (but this might be internal token)
     if (!authHeader) {
       const vercelHeaders = request.headers.get('x-vercel-sc-headers')
       if (vercelHeaders) {
