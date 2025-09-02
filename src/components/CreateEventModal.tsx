@@ -31,8 +31,70 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
   const [showMapsModal, setShowMapsModal] = useState(false)
   const [showErrorToast, setShowErrorToast] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [isGettingLocation, setIsGettingLocation] = useState(false)
 
   const commonTitles = ['Coffee', 'Lunch', 'Dinner', 'Spazieren', 'Sport', 'Kino', 'Bier', 'Online-Zocken']
+
+  // Function to get user's current location and set it as default
+  const getCurrentLocation = async () => {
+    if (!navigator.geolocation) {
+      console.log('Geolocation is not supported by this browser')
+      return
+    }
+
+    setIsGettingLocation(true)
+
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          reject,
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000 // 5 minutes cache
+          }
+        )
+      })
+
+      const { latitude, longitude } = position.coords
+
+      // Reverse geocode to get a human-readable location name
+      try {
+        const response = await fetch(
+          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=de`
+        )
+        
+        if (response.ok) {
+          const data = await response.json()
+          const locationName = data.locality || data.city || data.principalSubdivision || 'Aktuelle Position'
+          
+          setLocationName(locationName)
+          setLatitude(latitude)
+          setLongitude(longitude)
+          setRadiusKm(1) // Default to 1km radius for current location
+        } else {
+          // Fallback: just use coordinates
+          setLocationName('Aktuelle Position')
+          setLatitude(latitude)
+          setLongitude(longitude)
+          setRadiusKm(1)
+        }
+      } catch (geocodeError) {
+        // Fallback: just use coordinates without location name
+        setLocationName('Aktuelle Position')
+        setLatitude(latitude)
+        setLongitude(longitude)
+        setRadiusKm(1)
+      }
+
+    } catch (error: any) {
+      console.log('Error getting location:', error.message)
+      // Don't show error to user, just silently fail
+    } finally {
+      setIsGettingLocation(false)
+    }
+  }
 
   const resetForm = () => {
     // Set default values for new events
@@ -62,7 +124,7 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
     setVisibility('all_friends')
   }
 
-  // Load event data when editing
+  // Load event data when editing, or get current location for new events
   useEffect(() => {
     if (isOpen) {
       if (editEvent) {
@@ -93,6 +155,10 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
       } else {
         // Reset form completely when creating new event
         resetForm()
+        // Automatically get current location for new events
+        if (locationType === 'physical') {
+          getCurrentLocation()
+        }
       }
     }
   }, [isOpen, editEvent])
@@ -404,7 +470,13 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
             <div className="grid grid-cols-2 gap-2 mb-3">
               <button
                 type="button"
-                onClick={() => setLocationType('physical')}
+                onClick={() => {
+                  setLocationType('physical')
+                  // If switching back to physical and no location is set, get current location
+                  if (!locationName && !isGettingLocation) {
+                    getCurrentLocation()
+                  }
+                }}
                 className={`p-3 rounded-lg border text-sm font-medium shadow-md ${
                   locationType === 'physical'
                     ? 'bg-cyan-500 text-white border-black shadow-lg'
@@ -418,6 +490,8 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
                 onClick={() => {
                   setLocationType('online')
                   setLocationName('') // Clear location when switching to online
+                  setLatitude(null)
+                  setLongitude(null)
                 }}
                 className={`p-3 rounded-lg border text-sm font-medium shadow-md ${
                   locationType === 'online'
@@ -430,18 +504,36 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
             </div>
 
             {locationType === 'physical' && (
-              <SmartPlacesInput
-                value={locationName}
-                onChange={setLocationName}
-                onLocationSelect={handleLocationSelect}
-                onOpenMap={handleOpenMap}
-                placeholder="z.B. Starbucks Mitte, Tiergarten, etc."
-              />
+              <div className="relative">
+                <SmartPlacesInput
+                  value={locationName}
+                  onChange={setLocationName}
+                  onLocationSelect={handleLocationSelect}
+                  onOpenMap={handleOpenMap}
+                  placeholder={isGettingLocation ? "Ermittele aktuelle Position..." : "z.B. Starbucks Mitte, Tiergarten, etc."}
+                  disabled={isGettingLocation}
+                />
+                {isGettingLocation && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                  </div>
+                )}
+                {!editEvent && locationName === '' && !isGettingLocation && (
+                  <button
+                    type="button"
+                    onClick={getCurrentLocation}
+                    className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    📍 Aktuelle Position verwenden
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
 
-          {/* Visibility */}
+          {/* Visibility - Hidden for now, defaults to 'all_friends' */}
+          {/* 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Users size={16} className="inline mr-2" />
@@ -458,6 +550,7 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
               <option value="groups">Gruppen (später)</option>
             </select>
           </div>
+          */}
 
 
           {/* Submit Button */}
@@ -490,6 +583,7 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
         onClose={() => setShowMapsModal(false)}
         onLocationSelect={handleLocationSelect}
         initialLocation={latitude && longitude ? { latitude, longitude, radius: radiusKm } : undefined}
+        userLocation={latitude && longitude ? { latitude, longitude, name: locationName } : undefined}
       />
 
       {/* Error Toast */}

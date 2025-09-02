@@ -19,6 +19,11 @@ interface SmartMapModalProps {
     radius?: number
   }
   initialRadius?: number
+  userLocation?: {
+    latitude: number
+    longitude: number
+    name?: string
+  }
 }
 
 export default function SmartMapModal(props: SmartMapModalProps) {

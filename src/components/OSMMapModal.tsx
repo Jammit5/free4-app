@@ -37,13 +37,19 @@ interface OSMMapModalProps {
     radius?: number
   }
   initialRadius?: number
+  userLocation?: {
+    latitude: number
+    longitude: number
+    name?: string
+  }
 }
 
 export default function OSMMapModal({ 
   isOpen, 
   onClose, 
   onLocationSelect,
-  initialLocation 
+  initialLocation,
+  userLocation 
 }: OSMMapModalProps) {
   const [selectedLocation, setSelectedLocation] = useState<{
     latitude: number
@@ -162,13 +168,29 @@ export default function OSMMapModal({
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
+                {/* User Location Marker (blue) */}
+                {userLocation && (
+                  <Marker 
+                    position={[userLocation.latitude, userLocation.longitude]}
+                  >
+                    <Popup>
+                      <div className="text-sm">
+                        <div className="font-medium text-blue-600">📍 Deine Position</div>
+                        <div className="text-gray-600 text-xs mt-1">
+                          {userLocation.name || `${userLocation.latitude.toFixed(6)}, ${userLocation.longitude.toFixed(6)}`}
+                        </div>
+                      </div>
+                    </Popup>
+                  </Marker>
+                )}
+                {/* Selected Location Marker (red) */}
                 {selectedLocation && (
                   <Marker 
                     position={[selectedLocation.latitude, selectedLocation.longitude]}
                   >
                     <Popup>
                       <div className="text-sm">
-                        <div className="font-medium">Ausgewählter Ort</div>
+                        <div className="font-medium text-red-600">📌 Ausgewählter Ort</div>
                         <div className="text-gray-600 text-xs mt-1">
                           {selectedLocation.name}
                         </div>

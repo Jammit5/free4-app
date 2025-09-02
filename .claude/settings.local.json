@@ -9,7 +9,9 @@
       "WebSearch",
       "WebFetch(domain:supabase.com)",
       "WebFetch(domain:www.npmjs.com)",
-      "Bash(npm install)"
+      "Bash(npm install)",
+      "Bash(rm:*)",
+      "Bash(unzip:*)"
     ],
     "deny": [],
     "ask": []

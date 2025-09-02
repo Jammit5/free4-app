@@ -18,13 +18,19 @@ interface MapBoxMapModalProps {
     longitude: number
     radius?: number
   }
+  userLocation?: {
+    latitude: number
+    longitude: number
+    name?: string
+  }
 }
 
 export default function MapBoxMapModal({ 
   isOpen, 
   onClose, 
   onLocationSelect,
-  initialLocation 
+  initialLocation,
+  userLocation 
 }: MapBoxMapModalProps) {
   const [selectedLocation, setSelectedLocation] = useState<{
     latitude: number
@@ -38,6 +44,7 @@ export default function MapBoxMapModal({
   const map = useRef<any>(null)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const markerRef = useRef<any>(null)
+  const userLocationMarkerRef = useRef<any>(null)
   const radiusLayerId = 'radius-circle'
 
   // Function to create radius circle
@@ -225,6 +232,25 @@ export default function MapBoxMapModal({
 
           map.current.on('load', () => {
             console.log('MapBox map loaded successfully')
+            
+            // Add user location marker if available
+            if (userLocation) {
+              const userEl = document.createElement('div')
+              userEl.className = 'user-location-marker'
+              userEl.style.width = '20px'
+              userEl.style.height = '20px'
+              userEl.style.borderRadius = '50%'
+              userEl.style.backgroundColor = '#3B82F6'
+              userEl.style.border = '3px solid white'
+              userEl.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)'
+              userEl.style.cursor = 'pointer'
+              userEl.title = userLocation.name || 'Deine Position'
+              
+              userLocationMarkerRef.current = new mapboxgl.Marker(userEl)
+                .setLngLat([userLocation.longitude, userLocation.latitude])
+                .addTo(map.current)
+            }
+            
             setLoading(false)
           })
 
