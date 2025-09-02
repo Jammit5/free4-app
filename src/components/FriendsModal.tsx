@@ -130,6 +130,31 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
 
       if (error) throw error
 
+      // Send push notification for friend request
+      try {
+        const response = await fetch('/api/push', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userIds: [friendId],
+            type: 'friend_request',
+            data: {
+              fromUserId: currentUser.id,
+              fromUserName: profile?.full_name || 'Jemand'
+            }
+          })
+        })
+        
+        if (response.ok) {
+          console.log('📬 Friend request notification sent')
+        }
+      } catch (pushError) {
+        console.log('❌ Failed to send friend request notification:', pushError)
+        // Don't fail the main request if push notification fails
+      }
+
       // Update search result to show pending status
       setSearchResult(prev => prev ? { ...prev, friendship_status: 'pending', is_requester: true } : null)
     } catch (error: any) {

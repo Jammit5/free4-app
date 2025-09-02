@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { X, User, Camera, Trash2, AlertTriangle, Edit3 } from 'lucide-react'
 import type { Profile } from '@/lib/supabase'
+import PushNotificationSettings from './PushNotificationSettings'
 
 interface ProfileModalProps {
   isOpen: boolean
@@ -301,6 +302,12 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
               'Profilbild speichern'
             )}
           </button>
+
+          {/* Push Notifications Settings */}
+          <div className="border-t border-white/20 pt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Benachrichtigungen</h3>
+            <PushNotificationSettings />
+          </div>
 
           {/* Delete Account Section */}
           <div className="border-t border-white/20 pt-6">

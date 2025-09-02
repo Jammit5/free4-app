@@ -263,6 +263,49 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Successfully inserted ${insertedMatches?.length || 0} matches`)
 
+    // Send push notifications for new matches (only if we have matches)
+    if (insertedMatches && insertedMatches.length > 0) {
+      try {
+        // Get unique user IDs who should receive notifications
+        const matchedUserIds = [...new Set(
+          insertedMatches.map((match: any) => {
+            // Extract user IDs from both sides of the match
+            return [match.user_free4_id, match.matched_free4_id]
+          }).flat()
+        )]
+
+        // Get the actual user IDs from the event IDs
+        const { data: matchedEvents } = await supabase
+          .from('free4_events')
+          .select('user_id')
+          .in('id', matchedUserIds)
+
+        if (matchedEvents && matchedEvents.length > 0) {
+          const userIdsToNotify = [...new Set(matchedEvents.map(e => e.user_id))]
+          
+          console.log(`📬 Sending match notifications to ${userIdsToNotify.length} users`)
+
+          // Send push notifications asynchronously (don't wait for it)
+          fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/push`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userIds: userIdsToNotify,
+              type: 'new_matches',
+              data: {
+                matchCount: insertedMatches.length
+              }
+            })
+          }).catch(err => console.log('Push notification error:', err))
+        }
+      } catch (pushError) {
+        console.log('❌ Push notification setup failed:', pushError)
+        // Don't fail the main request if push notifications fail
+      }
+    }
+
     return NextResponse.json({ 
       matches: insertedMatches,
       message: `Found ${allMatches.length} matches`

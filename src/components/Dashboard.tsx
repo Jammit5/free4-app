@@ -11,6 +11,8 @@ import ProfileModal from './ProfileModal'
 import ImpressumModal from './ImpressumModal'
 import ContactModal from './ContactModal'
 import DataPrivacyModal from './DataPrivacyModal'
+import PWAInstallPrompt from './PWAInstallPrompt'
+import { useBackgroundSync } from '@/hooks/useBackgroundSync'
 
 interface DashboardProps {
   user: User
@@ -34,6 +36,9 @@ export default function Dashboard({ user }: DashboardProps) {
   const [showContact, setShowContact] = useState(false)
   const [showDataPrivacy, setShowDataPrivacy] = useState(false)
   const matchCheckInterval = useRef<NodeJS.Timeout | null>(null)
+  
+  // PWA Background Sync
+  const { triggerSync } = useBackgroundSync()
 
   useEffect(() => {
     loadProfile()
@@ -162,6 +167,9 @@ export default function Dashboard({ user }: DashboardProps) {
       } else {
         setEvents([])
       }
+      
+      // Trigger background sync after loading events
+      triggerSync('background-matches-sync')
     } catch (error) {
       console.error('Error loading events:', error)
     } finally {
@@ -811,6 +819,9 @@ export default function Dashboard({ user }: DashboardProps) {
         onClose={() => setShowDataPrivacy(false)}
         onOpenContact={() => setShowContact(true)}
       />
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
 
       <style jsx>{`
         @keyframes fadeOut {
