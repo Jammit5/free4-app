@@ -60,7 +60,6 @@ export async function POST(request: NextRequest) {
     const { userId } = await request.json()
     console.log(`🚀 POST /api/matches called for userId: ${userId}`)
     
-    
     if (!userId) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
@@ -163,14 +162,31 @@ export async function POST(request: NextRequest) {
 
     // Calculate all matches
     const allMatches = []
+    console.log(`🔄 Starting detailed match calculation between ${userEvents.length} user events and ${friendEvents.length} friend events`)
 
     for (const userEvent of userEvents) {
+      console.log(`\n👤 Checking user event: ${userEvent.title} (${userEvent.id})`)
+      console.log(`   📅 Time: ${userEvent.start_time} to ${userEvent.end_time}`)
+      console.log(`   📍 Location: ${userEvent.location_name} (${userEvent.latitude}, ${userEvent.longitude})`)
+      console.log(`   🎯 Radius: ${userEvent.radius_km}km`)
+      
       // Skip events without location
-      if (!userEvent.latitude || !userEvent.longitude) continue
+      if (!userEvent.latitude || !userEvent.longitude) {
+        console.log(`   ❌ Skipping: No coordinates`)
+        continue
+      }
 
       for (const friendEvent of friendEvents) {
+        console.log(`\n  👥 Against friend event: ${friendEvent.title} (${friendEvent.id})`)
+        console.log(`     📅 Time: ${friendEvent.start_time} to ${friendEvent.end_time}`)
+        console.log(`     📍 Location: ${friendEvent.location_name} (${friendEvent.latitude}, ${friendEvent.longitude})`)
+        console.log(`     🎯 Radius: ${friendEvent.radius_km}km`)
+        
         // Skip events without location
-        if (!friendEvent.latitude || !friendEvent.longitude) continue
+        if (!friendEvent.latitude || !friendEvent.longitude) {
+          console.log(`     ❌ Skipping: No coordinates`)
+          continue
+        }
 
         // Calculate distance
         const distance = calculateDistance(
@@ -182,7 +198,12 @@ export async function POST(request: NextRequest) {
 
         // Check if within radius (use larger radius for checking)
         const maxRadius = Math.max(userEvent.radius_km, friendEvent.radius_km)
-        if (distance > maxRadius) continue
+        console.log(`     📏 Distance: ${distance.toFixed(2)}km, Max radius: ${maxRadius}km`)
+        
+        if (distance > maxRadius) {
+          console.log(`     ❌ Skipping: Distance too far (${distance.toFixed(2)}km > ${maxRadius}km)`)
+          continue
+        }
 
         // Calculate time overlap
         const timeOverlap = calculateTimeOverlap(
@@ -192,10 +213,16 @@ export async function POST(request: NextRequest) {
           friendEvent.end_time
         )
 
-        if (!timeOverlap.overlap || timeOverlap.minutes < 30) continue // Minimum 30 min overlap
+        console.log(`     ⏰ Time overlap: ${timeOverlap.overlap ? `${timeOverlap.minutes} minutes` : 'No overlap'}`)
+        
+        if (!timeOverlap.overlap || timeOverlap.minutes < 30) {
+          console.log(`     ❌ Skipping: ${!timeOverlap.overlap ? 'No time overlap' : `Overlap too short (${timeOverlap.minutes} < 30 min)`}`)
+          continue // Minimum 30 min overlap
+        }
 
         // Calculate match score
         const matchScore = calculateMatchScore(distance, timeOverlap.minutes, maxRadius)
+        console.log(`     🎯 Match score: ${matchScore}`)
         
         // Calculate meeting point (midpoint between locations)
         const meetingLat = (userEvent.latitude + friendEvent.latitude) / 2
@@ -218,6 +245,7 @@ export async function POST(request: NextRequest) {
           status: 'active'
         }
 
+        console.log(`     ✅ MATCH FOUND! Adding to results`)
         allMatches.push(match)
       }
     }

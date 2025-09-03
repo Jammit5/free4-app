@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, BellOff, TestTube } from 'lucide-react'
+import { Bell, BellOff } from 'lucide-react'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 
 export default function PushNotificationSettings() {
@@ -55,35 +55,17 @@ export default function PushNotificationSettings() {
           </div>
         </div>
         
-        <div className="flex items-center space-x-2">
-          {isSubscribed && (
+        {!isSubscribed && (
+          <div className="flex items-center space-x-2">
             <button
-              onClick={sendTestNotification}
+              onClick={handleToggleSubscription}
               disabled={loading}
-              className="flex items-center space-x-1 px-2 py-1 text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
+              className="px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 bg-blue-100 text-blue-700 hover:bg-blue-200"
             >
-              <TestTube className="h-4 w-4" />
-              <span>Test</span>
+              {loading ? '...' : 'Aktivieren'}
             </button>
-          )}
-          
-          <button
-            onClick={handleToggleSubscription}
-            disabled={loading}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 ${
-              isSubscribed
-                ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-            }`}
-          >
-            {loading 
-              ? '...' 
-              : isSubscribed 
-                ? 'Deaktivieren' 
-                : 'Aktivieren'
-            }
-          </button>
-        </div>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -101,13 +83,20 @@ export default function PushNotificationSettings() {
       )}
 
       {isSubscribed && (
-        <div className="bg-green-50 border border-green-200 rounded-md p-3">
+        <div className="bg-green-50 border border-green-200 rounded-md p-3 space-y-3">
           <div className="flex items-center space-x-2">
             <Bell className="h-4 w-4 text-green-600" />
             <p className="text-sm text-green-700">
-              Du erhältst Benachrichtigungen über neue Matches und wichtige Updates.
+              Du erhältst jetzt Benachrichtigungen über neue Matches und Freundschaftsanfragen.
             </p>
           </div>
+          <button
+            onClick={handleToggleSubscription}
+            disabled={loading}
+            className="px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 bg-red-100 text-red-700 hover:bg-red-200"
+          >
+            {loading ? '...' : 'Deaktivieren'}
+          </button>
         </div>
       )}
     </div>
