@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { HelpCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import ImpressumModal from './ImpressumModal'
 import ContactModal from './ContactModal'
@@ -105,7 +107,16 @@ export default function AuthForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="max-w-md w-full space-y-8 bg-white/90 backdrop-blur-sm rounded-lg p-8 border border-white/20 shadow-lg">
+      <div className="max-w-md w-full space-y-8 bg-white/90 backdrop-blur-sm rounded-lg p-8 border border-white/20 shadow-lg relative">
+        {/* Question mark button - positioned at top right of white box */}
+        <Link
+          href="/was-ist-free4"
+          className="group absolute top-4 right-4 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105"
+          title="Was ist Free4?"
+        >
+          <HelpCircle className="h-7 w-7 text-blue-600 group-hover:text-blue-700" />
+        </Link>
+        
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Free4</h1>
           <p className="text-gray-600">Spontane Treffen mit deinen Freunden</p>
