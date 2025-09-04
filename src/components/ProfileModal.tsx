@@ -208,17 +208,9 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
   const handleExportData = async () => {
     setExportLoading(true)
     try {
-      // Get current session token
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.access_token) {
-        throw new Error('No authenticated session')
-      }
-
       const response = await fetch('/api/export-data', {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
+        credentials: 'include',
       })
 
       if (!response.ok) {
