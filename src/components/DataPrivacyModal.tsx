@@ -132,9 +132,8 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
                       <strong>Standortfunktionen:</strong> Sofern Sie Standortfunktionen unserer App nutzen 
                       (z. B. zur Anzeige Ihrer aktuellen Position oder zur Auswahl eines Treffpunktes), kann 
                       es zusätzlich zur Übermittlung von Standortdaten (Koordinaten) an Mapbox kommen – 
-                      insbesondere dann, wenn wir Dienste wie Geocoding oder Routenplanung einsetzen. Wenn 
-                      lediglich ein von der App berechneter Marker gesetzt wird, werden diese Daten nicht 
-                      an Mapbox weitergegeben.
+                      insbesondere dann, wenn wir Geocoding-Dienste einsetzen. Wenn lediglich ein von der App 
+                      berechneter Marker gesetzt wird, werden diese Daten nicht an Mapbox weitergegeben.
                     </p>
                   </div>
                   
@@ -225,7 +224,43 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
 
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  8. Weitergabe von Daten
+                  8. Cookies und Tracking
+                </h3>
+                <div className="text-gray-600 space-y-4">
+                  <p>
+                    Unsere App verwendet <strong>ausschließlich technisch notwendige Cookies</strong>, die für 
+                    den ordnungsgemäßen Betrieb der Website erforderlich sind. Dazu gehören:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 ml-4">
+                    <li>Authentifizierungs-Tokens (Session-Management)</li>
+                    <li>Technische Einstellungen (z.B. Sprache, Darstellung)</li>
+                    <li>Sicherheitsbezogene Daten (CSRF-Schutz)</li>
+                  </ul>
+                  
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <p className="text-green-800 text-sm">
+                      <strong>Keine Einwilligung erforderlich:</strong> Gemäß Art. 6 Abs. 1 lit. f DSGVO 
+                      und § 25 Abs. 2 Nr. 2 TTDSG ist für technisch notwendige Cookies keine Einwilligung 
+                      des Nutzers erforderlich. Daher verwenden wir keinen Cookie-Banner.
+                    </p>
+                  </div>
+                  
+                  <p>
+                    <strong>Analytics ohne Cookies:</strong> Wir nutzen Vercel Analytics und Speed Insights 
+                    zur anonymen Performance-Messung. Diese Tools arbeiten vollständig ohne Cookies und 
+                    sammeln nur aggregierte, nicht personenbezogene Daten zur Website-Optimierung.
+                  </p>
+                  
+                  <p>
+                    Wir verwenden <strong>keine</strong> Marketing-Cookies, Tracking-Cookies oder 
+                    Cookies von Drittanbietern für Werbezwecke.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                  9. Weitergabe von Daten
                 </h3>
                 <div className="text-gray-600">
                   <p>
@@ -237,7 +272,7 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
 
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  9. Ihre Rechte
+                  10. Ihre Rechte
                 </h3>
                 <div className="text-gray-600 space-y-4">
                   <p>Sie haben jederzeit das Recht auf:</p>
@@ -260,7 +295,7 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
 
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  10. Beschwerderecht
+                  11. Beschwerderecht
                 </h3>
                 <div className="text-gray-600">
                   <p>

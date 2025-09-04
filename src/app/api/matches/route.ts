@@ -101,11 +101,22 @@ function filterRelevantEvents(userEvent: any, friendEvents: any[]): any[] {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await request.json()
+    let userId: string | null = null
+    
+    // Try to parse JSON body, fallback to URL params if empty body
+    try {
+      const body = await request.json()
+      userId = body.userId
+    } catch (jsonError) {
+      // If JSON parsing fails, try to get userId from URL params
+      const url = new URL(request.url)
+      userId = url.searchParams.get('userId')
+    }
+    
     console.log(`🚀 POST /api/matches called for userId: ${userId}`)
     
     if (!userId) {
-      return NextResponse.json({ error: 'User ID required' }, { status: 400 })
+      return NextResponse.json({ error: 'User ID required in body or query params' }, { status: 400 })
     }
 
     // Use same token-based authentication as GET route

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { X, User, Camera, Trash2, AlertTriangle, Edit3 } from 'lucide-react'
+import { X, User, Camera, Trash2, AlertTriangle, Edit3, Download } from 'lucide-react'
 import type { Profile } from '@/lib/supabase'
 import PushNotificationSettings from './PushNotificationSettings'
 
@@ -22,6 +22,7 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [nameChangeLoading, setNameChangeLoading] = useState(false)
+  const [exportLoading, setExportLoading] = useState(false)
 
   const canChangeName = profile?.name_changed_at === null
 
@@ -160,6 +161,30 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
         .delete()
         .or(`requester_id.eq.${currentUser.id},addressee_id.eq.${currentUser.id}`)
 
+      // Delete matches where user is involved
+      await supabase
+        .from('matches')
+        .delete()
+        .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`)
+
+      // Delete push subscriptions
+      await supabase
+        .from('push_subscriptions')
+        .delete()
+        .eq('user_id', currentUser.id)
+
+      // Delete avatar from storage if exists
+      if (profile?.avatar_url) {
+        try {
+          const fileName = `avatar-${currentUser.id}`
+          await supabase.storage
+            .from('avatars')
+            .remove([fileName, `${fileName}.jpg`, `${fileName}.png`, `${fileName}.jpeg`, `${fileName}.webp`])
+        } catch (storageError) {
+          console.log('Avatar deletion failed (may not exist):', storageError)
+        }
+      }
+
       // Delete profile
       await supabase
         .from('profiles')
@@ -170,13 +195,55 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
       const { error } = await supabase.auth.admin.deleteUser(currentUser.id)
       if (error) throw error
 
-      console.log('Account wurde gelöscht.')
+      console.log('Account wurde vollständig gelöscht.')
       window.location.reload()
     } catch (error: any) {
       console.error('Error deleting account:', error)
       console.log('Fehler beim Löschen des Accounts: ' + error.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleExportData = async () => {
+    setExportLoading(true)
+    try {
+      const response = await fetch('/api/export-data', {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error('Export failed')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      
+      // Get filename from response headers or use default
+      const contentDisposition = response.headers.get('content-disposition')
+      let filename = 'free4-data-export.json'
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/)
+        if (filenameMatch) {
+          filename = filenameMatch[1]
+        }
+      }
+      
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      console.log('Datenexport erfolgreich heruntergeladen!')
+    } catch (error: any) {
+      console.error('Error exporting data:', error)
+      console.log('Fehler beim Exportieren der Daten: ' + error.message)
+    } finally {
+      setExportLoading(false)
     }
   }
 
@@ -307,6 +374,34 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
           <div className="border-t border-white/20 pt-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Benachrichtigungen</h3>
             <PushNotificationSettings />
+          </div>
+
+          {/* Data Export Section */}
+          <div className="border-t border-white/20 pt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Meine Daten</h3>
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600">
+                Du kannst alle deine gespeicherten Daten als JSON-Datei herunterladen 
+                (DSGVO Art. 20 - Recht auf Datenübertragbarkeit).
+              </p>
+              <button
+                onClick={handleExportData}
+                disabled={exportLoading}
+                className="w-full py-2 px-4 bg-white border border-black text-gray-900 shadow-md rounded-lg hover:bg-gray-50 disabled:opacity-50 flex items-center justify-center"
+              >
+                {exportLoading ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>
+                    Exportiere...
+                  </div>
+                ) : (
+                  <>
+                    <Download size={16} className="mr-2" />
+                    Meine Daten herunterladen
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Delete Account Section */}

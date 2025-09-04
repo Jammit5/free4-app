@@ -418,7 +418,7 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Uhrzeit
+                  Ab frühestens
                 </label>
                 <select
                   value={startTime}
@@ -434,7 +434,7 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
                     const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
                     return (
                       <option key={timeString} value={timeString}>
-                        {timeString}
+                        {timeString} Uhr
                       </option>
                     )
                   })}
@@ -442,7 +442,7 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Dauer
+                  Zeitraum
                 </label>
                 <select
                   value={duration}
@@ -504,25 +504,33 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
             </div>
 
             {locationType === 'physical' && (
-              <div className="relative">
-                <SmartPlacesInput
-                  value={locationName}
-                  onChange={setLocationName}
-                  onLocationSelect={handleLocationSelect}
-                  onOpenMap={handleOpenMap}
-                  placeholder={isGettingLocation ? "Ermittele aktuelle Position..." : "z.B. Starbucks Mitte, Tiergarten, etc."}
-                  disabled={isGettingLocation}
-                />
-                {isGettingLocation && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-3">
+                  <div className="relative flex-1">
+                    <SmartPlacesInput
+                      value={locationName}
+                      onChange={setLocationName}
+                      onLocationSelect={handleLocationSelect}
+                      onOpenMap={handleOpenMap}
+                      placeholder={isGettingLocation ? "Ermittele aktuelle Position..." : "z.B. Starbucks Mitte, Tiergarten, etc."}
+                      disabled={isGettingLocation}
+                    />
+                    {isGettingLocation && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                      </div>
+                    )}
                   </div>
-                )}
+                  <span className="text-gray-500 text-sm whitespace-nowrap">
+                    Umkreis: {radiusKm === 0.1 ? '0' : Math.round(radiusKm)} km
+                  </span>
+                </div>
+                
                 {!editEvent && locationName === '' && !isGettingLocation && (
                   <button
                     type="button"
                     onClick={getCurrentLocation}
-                    className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+                    className="text-sm text-blue-600 hover:text-blue-800 underline"
                   >
                     📍 Aktuelle Position verwenden
                   </button>

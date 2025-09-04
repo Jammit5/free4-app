@@ -631,6 +631,30 @@ export default function Dashboard({ user }: DashboardProps) {
               ))}
             </div>
           )}
+          
+          {/* Legal Links */}
+          <div className="mt-8 pt-6 text-center">
+            <div className="space-x-6">
+              <button
+                onClick={() => setShowImpressum(true)}
+                className="text-sm text-white/80 hover:text-white underline"
+              >
+                Impressum
+              </button>
+              <button
+                onClick={() => setShowContact(true)}
+                className="text-sm text-white/80 hover:text-white underline"
+              >
+                Kontakt
+              </button>
+              <button
+                onClick={() => setShowDataPrivacy(true)}
+                className="text-sm text-white/80 hover:text-white underline"
+              >
+                Datenschutz
+              </button>
+            </div>
+          </div>
         </div>
       </main>
 
@@ -776,33 +800,6 @@ export default function Dashboard({ user }: DashboardProps) {
         </div>
       )}
 
-      {/* Footer - only show when no modals are open */}
-      {!showCreateModal && !showFriendsModal && !showProfileModal && !selectedMatch && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/10 backdrop-blur-sm border-t border-white/20">
-          <div className="max-w-6xl mx-auto px-4 py-3 text-center">
-            <div className="space-x-6">
-              <button
-                onClick={() => setShowImpressum(true)}
-                className="text-sm text-white/80 hover:text-white underline"
-              >
-                Impressum
-              </button>
-              <button
-                onClick={() => setShowContact(true)}
-                className="text-sm text-white/80 hover:text-white underline"
-              >
-                Kontakt
-              </button>
-              <button
-                onClick={() => setShowDataPrivacy(true)}
-                className="text-sm text-white/80 hover:text-white underline"
-              >
-                Datenschutz
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modals */}
       <ImpressumModal 
