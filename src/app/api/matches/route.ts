@@ -55,6 +55,50 @@ function calculateMatchScore(distance: number, overlapMinutes: number, maxRadius
   return Math.round(distanceScore + timeScore)
 }
 
+// Rough distance check for pre-filtering (much faster than Haversine)
+function getRoughDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  // Simple Euclidean distance approximation (good enough for pre-filtering)
+  const latDiff = Math.abs(lat1 - lat2)
+  const lonDiff = Math.abs(lon1 - lon2)
+  
+  // Rough conversion: 1 degree ≈ 111km (at Berlin latitude ~52°)
+  const latKm = latDiff * 111
+  const lonKm = lonDiff * 111 * Math.cos(lat1 * Math.PI / 180)
+  
+  return Math.sqrt(latKm * latKm + lonKm * lonKm)
+}
+
+// Filter events by time and location relevance  
+function filterRelevantEvents(userEvent: any, friendEvents: any[]): any[] {
+  const userStart = new Date(userEvent.start_time)
+  const userEnd = new Date(userEvent.end_time)
+  const maxSearchRadius = 50 // km - generous search radius for pre-filtering
+  
+  return friendEvents.filter(friendEvent => {
+    // 1. Time overlap check (quick)
+    const friendStart = new Date(friendEvent.start_time)
+    const friendEnd = new Date(friendEvent.end_time)
+    
+    if (userEnd <= friendStart || userStart >= friendEnd) {
+      return false // No time overlap possible
+    }
+    
+    // 2. Skip events without coordinates
+    if (!friendEvent.latitude || !friendEvent.longitude) {
+      return false
+    }
+    
+    // 3. Rough geographic check (much faster than precise Haversine)
+    const roughDistance = getRoughDistance(
+      userEvent.latitude, userEvent.longitude,
+      friendEvent.latitude, friendEvent.longitude
+    )
+    
+    const combinedRadius = (userEvent.radius_km || 5) + (friendEvent.radius_km || 5)
+    return roughDistance <= (combinedRadius + maxSearchRadius)
+  })
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await request.json()
@@ -160,9 +204,14 @@ export async function POST(request: NextRequest) {
     console.log(`📅 Found ${friendEvents.length} friend events`)
 
 
-    // Calculate all matches
+    // Calculate all matches with optimized filtering
     const allMatches = []
-    console.log(`🔄 Starting detailed match calculation between ${userEvents.length} user events and ${friendEvents.length} friend events`)
+    const startTime = Date.now()
+    console.log(`🔄 Starting optimized match calculation between ${userEvents.length} user events and ${friendEvents.length} friend events`)
+    
+    let totalFriendEvents = 0
+    let totalRelevantEvents = 0
+    let totalPreciseCalculations = 0
 
     for (const userEvent of userEvents) {
       console.log(`\n👤 Checking user event: ${userEvent.title} (${userEvent.id})`)
@@ -176,19 +225,23 @@ export async function POST(request: NextRequest) {
         continue
       }
 
-      for (const friendEvent of friendEvents) {
+      // 🚀 OPTIMIZATION: Pre-filter friend events by time and rough location
+      const relevantFriendEvents = filterRelevantEvents(userEvent, friendEvents)
+      totalFriendEvents += friendEvents.length
+      totalRelevantEvents += relevantFriendEvents.length
+      console.log(`   🎯 Filtered from ${friendEvents.length} to ${relevantFriendEvents.length} relevant events (${Math.round((1 - relevantFriendEvents.length / friendEvents.length) * 100)}% reduction)`)
+
+      for (const friendEvent of relevantFriendEvents) {
+        totalPreciseCalculations++
         console.log(`\n  👥 Against friend event: ${friendEvent.title} (${friendEvent.id})`)
         console.log(`     📅 Time: ${friendEvent.start_time} to ${friendEvent.end_time}`)
         console.log(`     📍 Location: ${friendEvent.location_name} (${friendEvent.latitude}, ${friendEvent.longitude})`)
         console.log(`     🎯 Radius: ${friendEvent.radius_km}km`)
         
-        // Skip events without location
-        if (!friendEvent.latitude || !friendEvent.longitude) {
-          console.log(`     ❌ Skipping: No coordinates`)
-          continue
-        }
+        // Note: Coordinate and rough time/distance checks already done in pre-filtering
+        // Only precise calculations needed now
 
-        // Calculate distance
+        // Calculate precise distance
         const distance = calculateDistance(
           userEvent.latitude,
           userEvent.longitude, 
@@ -250,6 +303,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
+
+    // Performance summary
+    const endTime = Date.now()
+    const processingTime = endTime - startTime
+    const reductionPercentage = totalFriendEvents > 0 ? Math.round((1 - totalRelevantEvents / totalFriendEvents) * 100) : 0
+    
+    console.log(`\n🚀 PERFORMANCE OPTIMIZATION SUMMARY:`)
+    console.log(`   ⏱️  Total processing time: ${processingTime}ms`)
+    console.log(`   📊 Events before filtering: ${totalFriendEvents}`)
+    console.log(`   🎯 Events after filtering: ${totalRelevantEvents} (${reductionPercentage}% reduction)`)
+    console.log(`   🔢 Precise calculations: ${totalPreciseCalculations}`)
+    console.log(`   💡 Performance gain: ~${Math.round(totalFriendEvents / Math.max(totalPreciseCalculations, 1))}x faster`)
 
     console.log(`🔄 Found ${allMatches.length} potential matches`)
 

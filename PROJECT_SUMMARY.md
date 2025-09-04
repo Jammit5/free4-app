@@ -19,8 +19,9 @@
 
 ## Important Components Structure
 - `src/app/page.tsx`: Entry point with disclaimer → auth → dashboard flow
+- `src/app/was-ist-free4/page.tsx`: Comprehensive app explanation page with help content
 - `src/components/Dashboard.tsx`: Main logged-in interface
-- `src/components/AuthForm.tsx`: Login/register forms
+- `src/components/AuthForm.tsx`: Login/register forms with integrated help button
 - `src/components/*Modal.tsx`: Various modals (Profile, Events, Matches, Contact, etc.)
 - `src/components/CreateEventModal.tsx`: Event creation with geolocation auto-detection
 - `src/components/MapBox*` & `src/components/OSM*`: Dual map implementations with user location markers
@@ -72,12 +73,20 @@
 - Environment configs for dev/production
 - Web-push integration for notifications
 
-## Recent Major Implementations (Latest Session)
+## Recent Major Implementations (Latest Sessions)
+### Session 1: PWA & Core Features
 1. **Geolocation Integration**: Auto-detect user position when creating Free4 events
 2. **Complete PWA Implementation**: Service Worker, install prompt, offline support
 3. **Push Notifications**: Full web-push implementation with automatic notifications
 4. **Match Algorithm Debugging**: Enhanced logging revealed distance filtering works correctly
 5. **UI Refinements**: PWA manifest localization, push notification settings improvements
+
+### Session 2: Help System & User Onboarding
+1. **"Was ist Free4?" Explanation Page**: Complete informational page at `/was-ist-free4`
+2. **Help Button Integration**: Question mark icon on login page for easy access to explanation
+3. **UI Polish**: Refined button positioning, improved navigation flow
+4. **Content Organization**: Structured explanation with sections for functionality, pricing, and CTA
+5. **Design Consistency**: Matching gradient backgrounds and card layouts across pages
 
 ## Debugging History
 - **Match Algorithm Investigation**: User reported events not matching, investigation revealed correct behavior - events were filtered by distance (12.73km > 2km radius) before time overlap check
@@ -97,5 +106,15 @@
 - Fully functional PWA with comprehensive features
 - Match algorithm working correctly with proper distance and time filtering
 - Push notifications operational for user engagement
+- Complete user onboarding system with help documentation
+- Intuitive help access via question mark button on login page
 - All major features implemented and tested
 - Ready for production use with automatic deployments
+
+## Help & Documentation System
+- **Help Button**: Question mark icon (`HelpCircle`) positioned top-right in login form
+- **Explanation Page**: `/was-ist-free4` route with comprehensive app explanation
+- **Content Structure**: Problem description, solution overview, functionality examples, pricing info
+- **Navigation Flow**: Login → Help → Back to Login seamlessly integrated
+- **Design Consistency**: Matching gradient backgrounds and white content cards
+- **User Experience**: Tooltip on hover, clear close button, integrated CTA
