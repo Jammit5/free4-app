@@ -12,7 +12,10 @@
       "Bash(npm install)",
       "Bash(rm:*)",
       "Bash(unzip:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(dir)",
+      "Bash(git restore:*)",
+      "Bash(del \"C:\\Users\\Jammit\\Documents\\free4-app\\src\\app\\favicon.ico\")"
     ],
     "deny": [],
     "ask": []

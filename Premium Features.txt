@@ -1,0 +1,10 @@
+Beim Erstellen eines Free4, ändere den Text "Uhrzeit" in "Ab frühestens" und "Dauer" in "Zeitraum".
+
+Premium Features
+** Sofort
+- Mehr als 15 Freunde
+- Zweite E-Mail Adresse
+
+** Später
+- (Google) Kalender Integration
+- Custom Schnellauswahl Orte (Zuhause/Arbeit/Sportstudio...)
