@@ -106,8 +106,9 @@ export default function AuthForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="max-w-md w-full space-y-8 bg-white/90 backdrop-blur-sm rounded-lg p-8 border border-white/20 shadow-lg relative">
+    <div className="min-h-screen flex flex-col px-4 py-16">
+      <div className="flex-1 flex items-center justify-center">
+        <div className="max-w-md w-full space-y-8 bg-white/90 backdrop-blur-sm rounded-lg p-8 border border-white/20 shadow-lg relative">
         {/* Question mark button - positioned at top right of white box */}
         <Link
           href="/was-ist-free4"
@@ -122,7 +123,7 @@ export default function AuthForm() {
             <img 
               src="/Free4 Logo trans.png" 
               alt="Free4 Logo" 
-              className="h-36 mx-auto mb-4"
+              className="h-30 mx-auto mb-4"
             />
           </div>
           <p className="text-gray-600">Spontane Treffen mit deinen Freunden</p>
@@ -271,31 +272,30 @@ export default function AuthForm() {
             </div>
           )}
         </form>
+        </div>
       </div>
 
-      {/* Footer - positioned at bottom center */}
-      <div className="fixed bottom-0 left-0 right-0">
-        <div className="text-center py-4">
-          <div className="space-x-6">
-            <button
-              onClick={() => setShowImpressum(true)}
-              className="text-sm text-white/80 hover:text-white underline"
-            >
-              Impressum
-            </button>
-            <button
-              onClick={() => setShowContact(true)}
-              className="text-sm text-white/80 hover:text-white underline"
-            >
-              Kontakt
-            </button>
-            <button
-              onClick={() => setShowDataPrivacy(true)}
-              className="text-sm text-white/80 hover:text-white underline"
-            >
-              Datenschutz
-            </button>
-          </div>
+      {/* Footer - positioned below white box */}
+      <div className="text-center pb-4">
+        <div className="space-x-6">
+          <button
+            onClick={() => setShowImpressum(true)}
+            className="text-sm text-white/80 hover:text-white underline"
+          >
+            Impressum
+          </button>
+          <button
+            onClick={() => setShowContact(true)}
+            className="text-sm text-white/80 hover:text-white underline"
+          >
+            Kontakt
+          </button>
+          <button
+            onClick={() => setShowDataPrivacy(true)}
+            className="text-sm text-white/80 hover:text-white underline"
+          >
+            Datenschutz
+          </button>
         </div>
       </div>
 
