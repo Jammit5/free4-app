@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { X, Users, UserPlus, Mail, Check, X as XIcon } from 'lucide-react'
+import { X, Users, UserPlus, Mail, Check, X as XIcon, Share2, Copy } from 'lucide-react'
 import type { Profile, Friendship } from '@/lib/supabase'
 
 interface FriendsModalProps {
@@ -20,13 +20,31 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
   const [pendingRequests, setPendingRequests] = useState<(Friendship & { profile: Profile })[]>([])
   const [loading, setLoading] = useState(true)
   const [removeConfirmId, setRemoveConfirmId] = useState<string | null>(null)
+  const [showInviteSuccess, setShowInviteSuccess] = useState(false)
+  const [showShareOptions, setShowShareOptions] = useState<string | null>(null)
+  const [profile, setProfile] = useState<any>(null)
 
   useEffect(() => {
     if (isOpen) {
       loadFriends()
       loadPendingRequests()
+      loadProfile()
     }
   }, [isOpen])
+
+  const loadProfile = async () => {
+    try {
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single()
+      
+      setProfile(userProfile)
+    } catch (error) {
+      console.error('Error loading profile:', error)
+    }
+  }
 
   const loadFriends = async () => {
     try {
@@ -86,13 +104,15 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
     setSearchResult(null)
 
     try {
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('email', searchEmail.toLowerCase().trim())
         .single()
 
-      if (profile) {
+      console.log('Search result:', { profile, error })
+
+      if (profile && !error) {
         // Check if already friends or pending request exists
         const { data: existingFriendship } = await supabase
           .from('friendships')
@@ -108,10 +128,13 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
           is_requester: existingFriendship?.requester_id === currentUser.id
         } as any)
       } else {
+        // User not found - this is where we want to show the invite option
+        console.log('User not found, showing invite option for:', searchEmail)
         setSearchResult({ email: searchEmail, not_found: true } as any)
       }
     } catch (error) {
       console.error('Error searching user:', error)
+      // Always show invite option on any error
       setSearchResult({ email: searchEmail, not_found: true } as any)
     } finally {
       setSearchLoading(false)
@@ -206,6 +229,83 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
     }
   }
 
+  const generateInviteText = (email: string) => {
+    const userName = profile?.full_name || 'Ein Freund'
+    const appUrl = window.location.origin
+    return `Hey! ${userName} benutzt Free4 um sich Möglichkeiten für spontane Treffen anzeigen zu lassen. Wenn du auch zu Free4 kommst, könnt ihr euch gegenseitig bei euren eingetragenen freien Zeiten sehen und euch verabreden. Bist du dabei? Schöne Grüße von ${userName} und Free4 → ${appUrl}`
+  }
+
+  const handleInvite = async (email: string) => {
+    try {
+      const inviteText = generateInviteText(email)
+      const userName = profile?.full_name || 'Ein Freund'
+      const subject = `${userName} würde dich gerne zu Free4 einladen`
+      
+      // Copy to clipboard first
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(inviteText)
+      } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea')
+        textArea.value = inviteText
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+      }
+      
+      // Show success message
+      setShowInviteSuccess(true)
+      setTimeout(() => setShowInviteSuccess(false), 3000)
+      
+      // Try Web Share API first (works best on mobile)
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: subject,
+            text: inviteText,
+            url: window.location.origin
+          })
+          return // Success, exit function
+        } catch (shareError) {
+          // Share was cancelled or failed, continue to fallback
+        }
+      }
+      
+      // If native share fails or isn't available, the UI will show manual options
+      
+    } catch (error) {
+      console.log('Einladung wurde in die Zwischenablage kopiert')
+    }
+  }
+  
+  const handleManualShare = (platform: string, email: string) => {
+    const inviteText = generateInviteText(email)
+    const userName = profile?.full_name || 'Ein Freund'
+    const subject = `${userName} würde dich gerne zu Free4 einladen`
+    
+    switch (platform) {
+      case 'email':
+        const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(inviteText)}`
+        window.open(mailtoUrl, '_blank')
+        break
+      case 'gmail':
+        // Multiple Gmail URL formats to try
+        const shortText = `Hey! ${userName} nutzt Free4 für spontane Treffen und möchte dich einladen. Komm dazu: ${window.location.origin}`
+        
+        // Try the simplest possible Gmail URL that should preserve labels
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(shortText)}`
+        
+        console.log('Gmail URL:', gmailUrl)
+        window.open(gmailUrl, '_blank')
+        break
+      case 'whatsapp':
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(inviteText)}`
+        window.open(whatsappUrl, '_blank')
+        break
+    }
+  }
+
   if (!isOpen) return null
 
   return (
@@ -262,9 +362,65 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
             {searchResult && (
               <div className="p-4 border border-white/20 rounded-lg">
                 {searchResult.not_found ? (
-                  <div className="flex items-center text-gray-600">
-                    <Mail size={16} className="mr-2" />
-                    <span>Kein Benutzer mit dieser Email gefunden</span>
+                  <div className="space-y-3">
+                    <div className="flex items-center text-gray-600">
+                      <Mail size={16} className="mr-2" />
+                      <span>Kein Benutzer mit dieser Email gefunden</span>
+                    </div>
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => {
+                          console.log('Invite button clicked for:', searchResult.email)
+                          console.log('Has navigator.share:', !!navigator.share)
+                          // Check if it's mobile (where native share works better)
+                          const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+                          console.log('Is mobile device:', isMobile)
+                          
+                          if (navigator.share && isMobile) {
+                            handleInvite(searchResult.email)
+                          } else {
+                            setShowShareOptions(searchResult.email)
+                          }
+                        }}
+                        className="w-full py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md text-sm font-medium flex items-center justify-center space-x-2"
+                      >
+                        <Share2 size={16} />
+                        <span>Zu Free4 einladen!</span>
+                      </button>
+                      
+                      {/* Manual Share Options (Desktop) */}
+                      {showShareOptions === searchResult.email && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => {
+                              handleManualShare('gmail', searchResult.email)
+                              setShowShareOptions(null)
+                            }}
+                            className="py-2 px-3 bg-red-500 hover:bg-red-600 text-white rounded text-xs font-medium"
+                          >
+                            📧 Gmail
+                          </button>
+                          <button
+                            onClick={() => {
+                              handleManualShare('email', searchResult.email)
+                              setShowShareOptions(null)
+                            }}
+                            className="py-2 px-3 bg-gray-500 hover:bg-gray-600 text-white rounded text-xs font-medium"
+                          >
+                            ✉️ E-Mail
+                          </button>
+                          <button
+                            onClick={() => {
+                              handleManualShare('whatsapp', searchResult.email)
+                              setShowShareOptions(null)
+                            }}
+                            className="py-2 px-3 bg-green-500 hover:bg-green-600 text-white rounded text-xs font-medium"
+                          >
+                            💬 WhatsApp
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
@@ -404,6 +560,36 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
         </div>
         </div>
       </main>
+
+      {/* Success Toast */}
+      {showInviteSuccess && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <div 
+            className="bg-green-500 text-white rounded-lg shadow-lg px-6 py-4 max-w-sm mx-4"
+            style={{
+              animation: 'fadeOut 3.5s ease-in-out forwards'
+            }}
+          >
+            <div className="flex items-center space-x-2">
+              <Copy size={16} />
+              <p className="font-medium">
+                Einladung in Zwischenablage kopiert!
+              </p>
+            </div>
+            <p className="text-sm mt-1 text-green-100">
+              Teile sie über WhatsApp, SMS oder E-Mail
+            </p>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes fadeOut {
+          0% { opacity: 1; transform: translateY(0); }
+          80% { opacity: 1; transform: translateY(0); }
+          100% { opacity: 0; transform: translateY(-10px); }
+        }
+      `}</style>
     </div>
   )
 }

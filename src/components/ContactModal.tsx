@@ -64,9 +64,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto" style={{
-      background: '#0ea5e9'
-    }}>
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-gradient-to-br from-sky-500 to-cyan-500">
       {/* Header */}
       <header className="bg-white/90 backdrop-blur-sm shadow-sm border-b border-white/20">
         <div className="max-w-2xl mx-auto px-4 py-4 flex justify-between items-center">
