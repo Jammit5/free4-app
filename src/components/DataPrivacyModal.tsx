@@ -12,7 +12,7 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50" style={{
+    <div className="fixed inset-0 z-50 overflow-y-auto" style={{
       background: 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)'
     }}>
       {/* Header */}
@@ -33,7 +33,7 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8 overflow-y-auto" style={{ height: 'calc(100vh - 80px)' }}>
+      <main className="max-w-4xl mx-auto px-4 py-8 pb-16">
         <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm border border-white/20">
           <div className="p-8">
             
