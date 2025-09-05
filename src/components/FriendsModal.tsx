@@ -209,7 +209,7 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50" style={{
+    <div className="fixed inset-0 z-50 overflow-y-auto" style={{
       background: 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)'
     }}>
       {/* Header */}
