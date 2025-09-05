@@ -195,7 +195,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full py-3 px-4 bg-gray-100 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-200"
+                className="w-full py-3 px-4 bg-white border border-black text-gray-900 rounded-lg shadow-md hover:bg-gray-50 font-medium"
               >
                 Schließen
               </button>

@@ -118,7 +118,13 @@ export default function AuthForm() {
         </Link>
         
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Free4</h1>
+          <div className="mb-6">
+            <img 
+              src="/Free4 Logo trans.png" 
+              alt="Free4 Logo" 
+              className="h-36 mx-auto mb-4"
+            />
+          </div>
           <p className="text-gray-600">Spontane Treffen mit deinen Freunden</p>
         </div>
 

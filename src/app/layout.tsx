@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   title: "Free4 - Spontane Treffen mit Freunden",
   description: "Zeig deinen Freunden wann du Zeit hast und entdecke spontane Möglichkeiten euch zu treffen",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export const viewport: Viewport = {
