@@ -686,7 +686,7 @@ export default function Dashboard({ user }: DashboardProps) {
       {/* Match Detail Modal */}
       {selectedMatch && (
         <div className="fixed inset-0 z-50" style={{
-          background: 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)'
+          background: '#0ea5e9'
         }}>
           {/* Header */}
           <header className="bg-white/90 backdrop-blur-sm shadow-sm border-b border-white/20">

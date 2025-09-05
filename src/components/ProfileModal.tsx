@@ -251,7 +251,7 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto" style={{
-      background: 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)'
+      background: '#0ea5e9'
     }}>
       {/* Header */}
       <header className="bg-white/90 backdrop-blur-sm shadow-sm border-b border-white/20">
