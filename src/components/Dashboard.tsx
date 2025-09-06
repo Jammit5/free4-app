@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 import type { Free4Event, Profile } from '@/lib/supabase'
-import { Plus, LogOut, Users, Calendar, MapPin, User, Heart, X, Copy, RefreshCw, Wrench } from 'lucide-react'
+import { Plus, LogOut, Users, Calendar, MapPin, User, Heart, X, Copy, RefreshCw, Wrench, ArrowRight } from 'lucide-react'
 import Image from 'next/image'
 import CreateEventModal from './CreateEventModal'
 import FriendsModal from './FriendsModal'
@@ -524,8 +524,8 @@ export default function Dashboard({ user }: DashboardProps) {
             onClick={() => setShowCreateModal(true)}
             className="w-full bg-white hover:bg-gray-50 text-gray-900 font-medium py-4 px-6 rounded-lg flex items-center justify-center space-x-2 transition-colors border border-black shadow-md"
           >
-            <Plus size={20} />
-            <span>Free 4 ...</span>
+            <span>Free4 erstellen</span>
+            <ArrowRight size={20} className="text-sky-500" />
           </button>
         </div>
 
