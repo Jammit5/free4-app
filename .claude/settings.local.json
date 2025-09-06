@@ -15,7 +15,12 @@
       "Bash(npm install:*)",
       "Bash(dir)",
       "Bash(git restore:*)",
-      "Bash(del \"C:\\Users\\Jammit\\Documents\\free4-app\\src\\app\\favicon.ico\")"
+      "Bash(del \"C:\\Users\\Jammit\\Documents\\free4-app\\src\\app\\favicon.ico\")",
+      "Bash(grep:*)",
+      "WebFetch(domain:til.simonwillison.net)",
+      "Bash(rd:*)",
+      "Bash(npm run build:*)",
+      "Bash(gh run list:*)"
     ],
     "deny": [],
     "ask": []

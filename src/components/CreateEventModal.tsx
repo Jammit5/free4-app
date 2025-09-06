@@ -33,7 +33,7 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
   const [errorMessage, setErrorMessage] = useState('')
   const [isGettingLocation, setIsGettingLocation] = useState(false)
 
-  const commonTitles = ['Coffee', 'Lunch', 'Dinner', 'Spazieren', 'Sport', 'Kino', 'Bier', 'Online-Zocken']
+  const commonTitles = ['Coffee', 'Lunch', 'Dinner', 'Spazieren', 'Sport', 'Kino', 'Bier', 'Spielen']
 
   // Function to get user's current location and set it as default
   const getCurrentLocation = async () => {
@@ -322,15 +322,15 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated, edit
       {/* Header */}
       <header className="bg-white/90 backdrop-blur-sm shadow-sm border-b border-white/20">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-4xl font-bold text-gray-900">
             {editEvent ? 'Free4 bearbeiten' : 'Free 4 ...'}
           </h2>
           <button 
             onClick={onClose} 
-            className="p-2 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
+            className="p-3 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
             title="Zurück"
           >
-            <X size={20} />
+            <X size={26} />
           </button>
         </div>
       </header>

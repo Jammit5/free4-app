@@ -315,16 +315,16 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
       {/* Header */}
       <header className="bg-white/90 backdrop-blur-sm shadow-sm border-b border-white/20">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-            <Users size={24} className="mr-2" />
+          <h2 className="text-4xl font-bold text-gray-900 flex items-center">
+            <Users size={32} className="mr-2" />
             Freunde
           </h2>
           <button 
             onClick={onClose} 
-            className="p-2 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
+            className="p-3 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
             title="Zurück"
           >
-            <X size={20} />
+            <X size={26} />
           </button>
         </div>
       </header>
@@ -472,18 +472,20 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
                         <p className="text-sm text-gray-600">{request.profile.email}</p>
                       </div>
                     </div>
-                    <div className="flex justify-end space-x-2">
+                    <div className="flex justify-end space-x-4">
                       <button
                         onClick={() => respondToRequest(request.id, true)}
-                        className="px-4 py-2 bg-white border border-black text-gray-900 shadow-md rounded-md hover:bg-gray-50 text-sm"
+                        className="p-3 text-green-600 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
+                        title="Freundschaftsanfrage annehmen"
                       >
-                        Annehmen
+                        <Check size={26} />
                       </button>
                       <button
                         onClick={() => respondToRequest(request.id, false)}
-                        className="px-4 py-2 bg-white border border-black text-gray-900 shadow-md rounded-md hover:bg-gray-50 text-sm"
+                        className="p-3 text-red-600 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
+                        title="Freundschaftsanfrage ablehnen"
                       >
-                        Ablehnen
+                        <XIcon size={26} />
                       </button>
                     </div>
                   </div>
@@ -526,7 +528,7 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
                         }`}
                         title={removeConfirmId === friend.id ? 'Wirklich entfernen?' : 'Freund entfernen'}
                       >
-                        <X size={16} />
+                        <X size={20} />
                       </button>
                     </div>
                     

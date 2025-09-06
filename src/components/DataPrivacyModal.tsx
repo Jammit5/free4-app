@@ -16,16 +16,16 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
       {/* Header */}
       <header className="bg-white/90 backdrop-blur-sm shadow-sm border-b border-white/20">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-            <Shield size={24} className="mr-2" />
+          <h2 className="text-4xl font-bold text-gray-900 flex items-center">
+            <Shield size={32} className="mr-2" />
             Datenschutzerklärung
           </h2>
           <button 
             onClick={onClose} 
-            className="p-2 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
+            className="p-3 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
             title="Zurück"
           >
-            <X size={20} />
+            <X size={26} />
           </button>
         </div>
       </header>

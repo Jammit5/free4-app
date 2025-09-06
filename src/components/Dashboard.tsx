@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 import type { Free4Event, Profile } from '@/lib/supabase'
-import { Plus, LogOut, Users, Calendar, MapPin, User, Heart, X, Copy, RefreshCw } from 'lucide-react'
+import { Plus, LogOut, Users, Calendar, MapPin, User, Heart, X, Copy, RefreshCw, Wrench } from 'lucide-react'
+import Image from 'next/image'
 import CreateEventModal from './CreateEventModal'
 import FriendsModal from './FriendsModal'
 import ProfileModal from './ProfileModal'
@@ -463,44 +464,54 @@ export default function Dashboard({ user }: DashboardProps) {
       {/* Header */}
       <header className="bg-white/90 backdrop-blur-sm shadow-sm border-b border-white/20">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Free4</h1>
-            <p className="text-sm text-gray-600">Hey {profile?.full_name || 'User'}!</p>
+          <div className="flex items-center space-x-4">
+            {/* Logo */}
+            <Image 
+              src="/Free4 Symbol trans.png"
+              alt="Free4 Logo"
+              width={52}
+              height={52}
+              className="object-contain"
+            />
+            {/* Free4 Text with colored "4" */}
+            <h1 className="text-4xl font-bold text-gray-900">
+              Free<span className="text-sky-500">4</span>
+            </h1>
           </div>
           <div className="flex items-center space-x-4">
             <button 
               onClick={() => setShowProfileModal(true)}
-              className="p-2 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
+              className="p-3 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
               title="Mein Profil"
             >
               {profile?.avatar_url ? (
                 <img 
                   src={profile.avatar_url} 
                   alt="Profil" 
-                  className="w-5 h-5 rounded-full object-cover"
+                  className="w-7 h-7 rounded-full object-cover"
                 />
               ) : (
-                <User size={20} />
+                <User size={26} />
               )}
             </button>
             <button 
               onClick={() => setShowFriendsModal(true)}
-              className="relative p-2 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
+              className="relative p-3 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
               title="Freunde"
             >
-              <Users size={20} />
+              <Users size={26} />
               {pendingRequestsCount > 0 && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                   {pendingRequestsCount}
                 </div>
               )}
             </button>
             <button 
               onClick={handleLogout}
-              className="p-2 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
+              className="p-3 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
               title="Abmelden"
             >
-              <LogOut size={20} />
+              <LogOut size={26} />
             </button>
           </div>
         </div>
@@ -604,26 +615,27 @@ export default function Dashboard({ user }: DashboardProps) {
                       )}
                     </div>
                     
-                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 sm:ml-4">
+                    <div className="flex space-x-4">
                       <button 
                         onClick={() => handleEditEvent(event)}
-                        className="bg-white border border-black rounded-lg px-3 py-1 text-gray-900 hover:bg-gray-50 text-sm shadow-md w-full sm:w-auto"
+                        className="p-3 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
+                        title="Free4 bearbeiten"
                       >
-                        Bearbeiten
+                        <Wrench size={26} />
                       </button>
                       <button 
                         onClick={() => handleCopyEvent(event)}
-                        className="bg-white border border-black rounded-lg px-3 py-1 text-gray-900 hover:bg-gray-50 text-sm shadow-md flex items-center justify-center space-x-1 w-full sm:w-auto"
+                        className="p-3 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
                         title="Free4 kopieren"
                       >
-                        <Copy size={12} />
-                        <span>Kopieren</span>
+                        <Copy size={26} />
                       </button>
                       <button 
                         onClick={() => handleDeleteEvent(event.id)}
-                        className="bg-white border border-black rounded-lg px-3 py-1 text-gray-900 hover:bg-gray-50 text-sm shadow-md w-full sm:w-auto"
+                        className="p-3 text-red-600 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
+                        title="Free4 löschen"
                       >
-                        Löschen
+                        <X size={26} />
                       </button>
                     </div>
                   </div>

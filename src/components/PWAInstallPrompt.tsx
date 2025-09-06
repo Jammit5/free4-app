@@ -108,7 +108,7 @@ export default function PWAInstallPrompt() {
             onClick={handleDismiss}
             className="text-gray-400 hover:text-gray-600"
           >
-            <X size={20} />
+            <X size={26} />
           </button>
         </div>
         

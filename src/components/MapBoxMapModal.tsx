@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, MapPin, Check } from 'lucide-react'
+import { X, MapPin, Check, Plus, Minus } from 'lucide-react'
 import mapboxgl from 'mapbox-gl'
 
 interface MapBoxMapModalProps {
@@ -36,8 +36,13 @@ export default function MapBoxMapModal({
     latitude: number
     longitude: number
     name: string
-  } | null>(null)
+  } | null>(userLocation ? {
+    latitude: userLocation.latitude,
+    longitude: userLocation.longitude,
+    name: userLocation.name || 'Deine Position'
+  } : null)
   const [radius, setRadius] = useState(initialLocation?.radius || 1.0) // Default 1km or from initialLocation
+  const [isMobile, setIsMobile] = useState(false)
   const [loading, setLoading] = useState(true)
   const [mapError, setMapError] = useState(false)
   const mapContainer = useRef<HTMLDivElement>(null)
@@ -46,6 +51,53 @@ export default function MapBoxMapModal({
   const markerRef = useRef<any>(null)
   const userLocationMarkerRef = useRef<any>(null)
   const radiusLayerId = 'radius-circle'
+
+  // Helper function to calculate zoom level to fit circle on map
+  const getZoomForRadius = (radiusKm: number): number => {
+    // Calculate zoom to ensure the entire circle fits in the map view
+    // Map container is approximately 384px height (h-96), assuming 100px = ~1.1km at zoom 13
+    // We want the circle diameter (2 * radius) to fit with some padding
+    
+    const mapHeightKm = 0.5 // Approximate viewable area in km at zoom level
+    const paddingFactor = 1.5 // Add padding so circle doesn't touch edges
+    const circleDiameter = radiusKm * 2 * paddingFactor
+    
+    // Base zoom calculation: each zoom level roughly doubles the scale
+    // At zoom 13: ~1km visible height
+    // At zoom 12: ~2km visible height  
+    // At zoom 11: ~4km visible height
+    let baseZoom = 13
+    let visibleArea = 1.0 // km
+    
+    // Find zoom level where circle fits
+    while (visibleArea < circleDiameter && baseZoom > 1) {
+      baseZoom--
+      visibleArea *= 2
+    }
+    
+    // Ensure reasonable bounds
+    return Math.max(3, Math.min(18, baseZoom))
+  }
+
+  // Helper function to center map on location with appropriate zoom
+  const centerMapOnLocation = (lng: number, lat: number, radiusKm: number) => {
+    if (!map.current) return
+    
+    // Use MapBox's fitBounds for more precise fitting
+    const radiusInDegrees = radiusKm / 111.32 // Rough conversion: 1 degree ≈ 111.32 km
+    const padding = 50 // pixels of padding
+    
+    const bounds = [
+      [lng - radiusInDegrees, lat - radiusInDegrees], // Southwest coordinates
+      [lng + radiusInDegrees, lat + radiusInDegrees]  // Northeast coordinates
+    ]
+    
+    map.current.fitBounds(bounds, {
+      padding: padding,
+      duration: 600,
+      essential: true
+    })
+  }
 
   // Function to create radius circle
   const createRadiusCircle = (center: [number, number], radiusKm: number) => {
@@ -96,6 +148,16 @@ export default function MapBoxMapModal({
       }
     })
   }
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     if (!isOpen) return
@@ -159,6 +221,9 @@ export default function MapBoxMapModal({
               .addTo(map.current)
 
             createRadiusCircle([lng, lat], radius)
+            
+            // Auto-center map on the clicked location
+            centerMapOnLocation(lng, lat, radius)
             
             setSelectedLocation({
               latitude: lat,
@@ -233,8 +298,13 @@ export default function MapBoxMapModal({
           map.current.on('load', () => {
             console.log('MapBox map loaded successfully')
             
-            // Add user location marker if available
-            if (userLocation) {
+            // If user location exists and is selected, show radius circle instead of marker
+            if (userLocation && selectedLocation?.latitude === userLocation.latitude) {
+              createRadiusCircle([userLocation.longitude, userLocation.latitude], radius)
+              // Center on user location with appropriate zoom
+              centerMapOnLocation(userLocation.longitude, userLocation.latitude, radius)
+            } else if (userLocation) {
+              // Show user location marker only if it's not the selected location
               const userEl = document.createElement('div')
               userEl.className = 'user-location-marker'
               userEl.style.width = '20px'
@@ -282,10 +352,12 @@ export default function MapBoxMapModal({
     }
   }, [isOpen, initialLocation])
 
-  // Update radius circle when radius changes
+  // Update radius circle and zoom when radius changes
   useEffect(() => {
     if (selectedLocation && map.current && !loading && !mapError) {
       createRadiusCircle([selectedLocation.longitude, selectedLocation.latitude], radius)
+      // Auto-adjust zoom when radius changes
+      centerMapOnLocation(selectedLocation.longitude, selectedLocation.latitude, radius)
     }
   }, [radius, selectedLocation, loading, mapError])
 
@@ -315,6 +387,9 @@ export default function MapBoxMapModal({
       longitude,
       name: `Demo Ort bei ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
     })
+    
+    // For fallback map, simulate centering by updating the visual state
+    // (This is just visual feedback since it's a static demo map)
   }
 
   if (!isOpen) return null
@@ -420,6 +495,32 @@ export default function MapBoxMapModal({
               </div>
             )}
 
+            {/* Mobile Radius Controls - under map */}
+            {selectedLocation && isMobile && (
+              <div className="mt-4 flex justify-center items-center space-x-4">
+                <button
+                  onClick={() => setRadius(Math.max(0.1, radius - 0.5))}
+                  className="p-3 bg-white border border-black text-gray-900 rounded-lg shadow-md hover:bg-gray-50"
+                  disabled={radius <= 0.1}
+                >
+                  <Minus size={26} />
+                </button>
+                <div className="text-center px-4">
+                  <div className="text-lg font-semibold text-gray-900">
+                    {radius === 0.1 ? 'Nur hier' : `${radius} km`}
+                  </div>
+                  <div className="text-xs text-gray-600">Umkreis</div>
+                </div>
+                <button
+                  onClick={() => setRadius(Math.min(20, radius + 0.5))}
+                  className="p-3 bg-white border border-black text-gray-900 rounded-lg shadow-md hover:bg-gray-50"
+                  disabled={radius >= 20}
+                >
+                  <Plus size={26} />
+                </button>
+              </div>
+            )}
+
             {/* Selected Location Info with inline button */}
             {selectedLocation && (
               <div className="mt-4 flex items-stretch gap-4">
@@ -435,21 +536,22 @@ export default function MapBoxMapModal({
                   </p>
                 </div>
                 
-                {/* Use Location Button */}
+                {/* Use Location Button - Desktop: with text, Mobile: icon only */}
                 <button
                   onClick={handleConfirm}
                   disabled={!selectedLocation}
-                  className="flex-1 px-4 py-2 bg-white border border-black text-gray-900 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-md"
+                  className={`${isMobile ? 'p-3' : 'flex-1 px-4 py-2'} bg-white border border-black text-green-600 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-md`}
+                  title={isMobile ? 'Ort verwenden' : undefined}
                 >
-                  <Check size={16} className="mr-2" />
-                  Ort verwenden
+                  <Check size={isMobile ? 26 : 16} className={isMobile ? '' : 'mr-2'} />
+                  {!isMobile && 'Ort verwenden'}
                 </button>
               </div>
             )}
           </div>
 
-          {/* Right side: Vertical Radius Slider */}
-          {selectedLocation && (
+          {/* Right side: Vertical Radius Slider - Desktop Only */}
+          {selectedLocation && !isMobile && (
             <div className="w-20 bg-gray-50 border-l border-gray-200 flex flex-col items-center justify-center py-6">
               <div className="flex flex-col items-center h-full">
                 <span className="text-xs text-gray-600 mb-2">
