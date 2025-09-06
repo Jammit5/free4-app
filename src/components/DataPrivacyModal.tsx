@@ -71,10 +71,36 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
                 </h3>
                 <div className="text-gray-600 space-y-4">
                   <p>
-                    Beim Besuch dieser Website werden keine personenbezogenen Daten gespeichert, außer 
-                    technisch notwendige Daten, die Ihr Browser automatisch übermittelt (z. B. IP-Adresse, 
-                    Datum und Uhrzeit des Abrufs, Browsertyp). Diese Daten werden ausschließlich zur 
-                    Sicherstellung des Betriebs der Website genutzt und nicht ausgewertet.
+                    Bei der Nutzung unserer App werden folgende personenbezogene Daten erhoben und verarbeitet:
+                  </p>
+                  
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-blue-900 mb-2">Pflichtdaten bei Registrierung:</h4>
+                    <ul className="list-disc list-inside space-y-1 text-blue-800 text-sm">
+                      <li>E-Mail-Adresse (zur Anmeldung und Kontaktaufnahme)</li>
+                      <li>Name (zur Anzeige in der App)</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-green-900 mb-2">Optionale Daten:</h4>
+                    <ul className="list-disc list-inside space-y-1 text-green-800 text-sm">
+                      <li><strong>Telefonnummer:</strong> Ausschließlich zur Auffindbarkeit durch Freunde bei Freundschaftsanfragen. Die Nummer wird nicht öffentlich angezeigt und nicht für andere Zwecke verwendet.</li>
+                      <li>Profilbild</li>
+                      <li>Standortdaten (nur bei Erstellung von Events)</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <p className="text-gray-800 text-sm">
+                      <strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung) für Pflichtdaten, 
+                      Art. 6 Abs. 1 lit. a DSGVO (Einwilligung) für optionale Daten wie Telefonnummer.
+                    </p>
+                  </div>
+                  
+                  <p>
+                    Technisch notwendige Daten (IP-Adresse, Browser-Informationen) werden automatisch 
+                    übertragen und ausschließlich zur Sicherstellung des Betriebs verwendet.
                   </p>
                 </div>
               </div>
@@ -178,9 +204,26 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
                   <p>
                     Wir nutzen Supabase (Supabase Inc., 970 Toa Payoh North #07-04, Singapore 318992) 
                     als Backend-Dienstleister für Authentifizierung und Datenbank-Hosting. Dabei werden 
-                    personenbezogene Daten (z. B. E-Mail-Adresse, Anmeldedaten, Nutzereinträge) im 
-                    Auftrag verarbeitet.
+                    folgende personenbezogene Daten im Auftrag verarbeitet:
                   </p>
+                  
+                  <ul className="list-disc list-inside space-y-1 ml-4">
+                    <li>E-Mail-Adresse und Anmeldedaten</li>
+                    <li>Name und Profilbild</li>
+                    <li>Optionale Telefonnummer (nur zur Freunde-Suche)</li>
+                    <li>Event-Daten und Standortinformationen</li>
+                    <li>Freundschaftsverbindungen und Match-Daten</li>
+                  </ul>
+                  
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <p className="text-orange-800 text-sm">
+                      <strong>Zweckbindung Telefonnummer:</strong> Die optionale Telefonnummer wird 
+                      ausschließlich verwendet, um Ihnen zu ermöglichen, über diese Nummer von 
+                      Freunden gefunden zu werden. Eine anderweitige Nutzung, öffentliche Anzeige 
+                      oder Weitergabe erfolgt nicht.
+                    </p>
+                  </div>
+                  
                   <p>
                     Mit Supabase besteht ein Vertrag zur Auftragsverarbeitung gemäß Art. 28 DSGVO. 
                     Weitere Informationen finden Sie unter <a 
@@ -282,10 +325,23 @@ export default function DataPrivacyModal({ isOpen, onClose, onOpenContact }: Dat
                     <li>Widerspruch gegen die Verarbeitung (Art. 21 DSGVO)</li>
                     <li>Datenübertragbarkeit (Art. 20 DSGVO)</li>
                   </ul>
+                  
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-blue-900 mb-2">Besonderheiten bei optionalen Daten:</h4>
+                    <p className="text-blue-800 text-sm">
+                      <strong>Widerruf der Einwilligung:</strong> Sie können Ihre Einwilligung zur 
+                      Verarbeitung optionaler Daten (z.B. Telefonnummer) jederzeit widerrufen, 
+                      indem Sie diese in Ihrem Profil entfernen. Dies hat keinen Einfluss auf 
+                      die Rechtmäßigkeit der bis zum Widerruf erfolgten Verarbeitung.
+                    </p>
+                  </div>
+                  
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <p className="text-green-800 text-sm">
-                      Zur Ausübung Ihrer Rechte genügt eine formlose Mitteilung an die oben angegebenen 
-                      Kontaktdaten.
+                      <strong>Datenexport:</strong> Sie können alle Ihre gespeicherten Daten 
+                      direkt über die App exportieren (Profil → "Meine Daten herunterladen"). 
+                      Zur Ausübung weiterer Rechte genügt eine formlose Mitteilung an die oben 
+                      angegebenen Kontaktdaten.
                     </p>
                   </div>
                 </div>

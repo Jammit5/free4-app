@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { X, User, Camera, Trash2, AlertTriangle, Edit3, Download } from 'lucide-react'
+import { X, User, Camera, Trash2, AlertTriangle, Edit3, Download, HelpCircle } from 'lucide-react'
 import type { Profile } from '@/lib/supabase'
 import PushNotificationSettings from './PushNotificationSettings'
 
@@ -16,6 +16,7 @@ interface ProfileModalProps {
 
 export default function ProfileModal({ isOpen, onClose, currentUser, profile, onProfileUpdated }: ProfileModalProps) {
   const [newName, setNewName] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -23,12 +24,18 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [nameChangeLoading, setNameChangeLoading] = useState(false)
   const [exportLoading, setExportLoading] = useState(false)
+  const [showPhoneHelp, setShowPhoneHelp] = useState(false)
+  const [phoneConsent, setPhoneConsent] = useState(false)
+  const [showPhoneConsent, setShowPhoneConsent] = useState(false)
 
   const canChangeName = profile?.name_changed_at === null
 
   useEffect(() => {
     if (isOpen && profile) {
       setNewName(profile.full_name || '')
+      const existingPhone = (profile as any).phone_number || ''
+      setPhoneNumber(existingPhone)
+      setPhoneConsent(!!existingPhone) // If phone exists, consent was given
       setAvatarPreview(profile.avatar_url || null)
     }
   }, [isOpen, profile])
@@ -83,6 +90,37 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
     }
   }
 
+  // Normalize phone number to international format
+  const normalizePhoneNumber = (phone: string): string | null => {
+    if (!phone.trim()) return null
+    
+    // Remove all non-digits
+    const digits = phone.replace(/\D/g, '')
+    
+    // If it starts with 49, add +
+    if (digits.startsWith('49')) {
+      return '+' + digits
+    }
+    
+    // If it starts with 0, replace with +49
+    if (digits.startsWith('0')) {
+      return '+49' + digits.substring(1)
+    }
+    
+    // If it starts with +, keep as is but clean
+    if (phone.startsWith('+')) {
+      return '+' + digits
+    }
+    
+    // If no country code detected and looks like German number (starts with 1-9)
+    if (digits.length >= 10 && digits.length <= 12) {
+      return '+49' + digits
+    }
+    
+    // Default: add + if missing
+    return phone.startsWith('+') ? phone : '+' + digits
+  }
+
   const handleSaveProfile = async () => {
     if (!profile) return
 
@@ -95,11 +133,18 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
         avatarUrl = await uploadAvatar(avatarFile)
       }
 
+      // Only save phone number if consent is given
+      let normalizedPhone = null
+      if (phoneNumber.trim() && phoneConsent) {
+        normalizedPhone = normalizePhoneNumber(phoneNumber)
+      }
+
       // Update profile
       const { error } = await supabase
         .from('profiles')
         .update({
           avatar_url: avatarUrl,
+          phone_number: normalizedPhone,
         })
         .eq('id', currentUser.id)
 
@@ -352,10 +397,72 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
             />
           </div>
 
+          {/* Phone Number Section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Telefonnummer
+            </label>
+            <input
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => {
+                setPhoneNumber(e.target.value)
+                // Show consent dialog when user starts typing
+                if (e.target.value.trim() && !phoneConsent && !showPhoneConsent) {
+                  setShowPhoneConsent(true)
+                }
+                // Hide consent if field is empty
+                if (!e.target.value.trim()) {
+                  setPhoneConsent(false)
+                  setShowPhoneConsent(false)
+                }
+              }}
+              placeholder="Optional, falls du anhand der Nummer gefunden werden möchtest"
+              className="w-full px-3 py-2 border border-white/20 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400 text-sm"
+            />
+            
+            {/* DSGVO Consent Dialog */}
+            {showPhoneConsent && phoneNumber.trim() && (
+              <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="phoneConsent"
+                    checked={phoneConsent}
+                    onChange={(e) => setPhoneConsent(e.target.checked)}
+                    className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <div className="flex-1">
+                    <label htmlFor="phoneConsent" className="text-sm text-blue-800 cursor-pointer">
+                      <strong>Einwilligung zur Telefonnummer-Verarbeitung (DSGVO Art. 6 Abs. 1 lit. a)</strong>
+                    </label>
+                    <p className="text-xs text-blue-700 mt-1">
+                      Ich willige ein, dass meine Telefonnummer gespeichert und <strong>ausschließlich</strong> dafür verwendet wird, 
+                      dass mich Freunde über diese Nummer in der App finden können. Die Nummer wird nicht öffentlich angezeigt, 
+                      nicht für Werbung verwendet und nicht an Dritte weitergegeben. 
+                      Diese Einwilligung kann ich jederzeit durch Entfernen der Nummer widerrufen.
+                    </p>
+                  </div>
+                </div>
+                {phoneConsent && (
+                  <div className="mt-2 text-xs text-green-700 flex items-center">
+                    ✓ Einwilligung erteilt - Telefonnummer wird beim Speichern gespeichert
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {!phoneConsent && phoneNumber.trim() && (
+              <div className="mt-2 text-xs text-amber-600">
+                ⚠ Ohne Einwilligung wird die Telefonnummer nicht gespeichert
+              </div>
+            )}
+          </div>
+
           {/* Save Button */}
           <button
             onClick={handleSaveProfile}
-            disabled={loading || (!avatarFile)}
+            disabled={loading}
             className="w-full py-2 px-4 bg-white border border-black text-gray-900 shadow-md rounded-lg hover:bg-gray-50 disabled:opacity-50"
           >
             {loading ? (
@@ -364,7 +471,7 @@ export default function ProfileModal({ isOpen, onClose, currentUser, profile, on
                 Speichere...
               </div>
             ) : (
-              'Profilbild speichern'
+              'Profil speichern'
             )}
           </button>
 

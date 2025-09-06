@@ -14,6 +14,7 @@ interface FriendsModalProps {
 
 export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsUpdated }: FriendsModalProps) {
   const [searchEmail, setSearchEmail] = useState('')
+  const [searchPhone, setSearchPhone] = useState('')
   const [searchResult, setSearchResult] = useState<Profile | null>(null)
   const [searchLoading, setSearchLoading] = useState(false)
   const [friends, setFriends] = useState<(Friendship & { profile: Profile })[]>([])
@@ -97,45 +98,114 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
     }
   }
 
+  // Normalize search phone number and get last 9 digits
+  const normalizeSearchPhone = (phone: string): string => {
+    const digits = phone.replace(/\D/g, '')
+    // Get last 9 digits for matching
+    return digits.length >= 9 ? digits.slice(-9) : digits
+  }
+
   const searchUser = async () => {
-    if (!searchEmail.trim() || searchEmail === currentUser.email) return
+    const email = searchEmail.trim()
+    const phone = searchPhone.trim()
+    
+    if ((!email && !phone) || email === currentUser.email) return
 
     setSearchLoading(true)
     setSearchResult(null)
 
     try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('email', searchEmail.toLowerCase().trim())
-        .single()
-
-      console.log('Search result:', { profile, error })
-
-      if (profile && !error) {
-        // Check if already friends or pending request exists
-        const { data: existingFriendship } = await supabase
-          .from('friendships')
+      if (email && phone) {
+        // Search by both email and phone (using last 9 digits)
+        const normalizedPhone = normalizeSearchPhone(phone)
+        const { data: profiles, error } = await supabase
+          .from('profiles')
           .select('*')
-          .or(
-            `and(requester_id.eq.${currentUser.id},addressee_id.eq.${profile.id}),and(requester_id.eq.${profile.id},addressee_id.eq.${currentUser.id})`
-          )
+          .or(`email.eq.${email.toLowerCase()},phone_number.ilike.%${normalizedPhone}`)
+        
+        const profile = profiles?.[0]
+        
+        if (profile && !error) {
+          // Rest of the logic...
+          const { data: existingFriendship } = await supabase
+            .from('friendships')
+            .select('*')
+            .or(
+              `and(requester_id.eq.${currentUser.id},addressee_id.eq.${profile.id}),and(requester_id.eq.${profile.id},addressee_id.eq.${currentUser.id})`
+            )
+            .single()
+
+          setSearchResult({
+            ...profile,
+            friendship_status: existingFriendship?.status || null,
+            is_requester: existingFriendship?.requester_id === currentUser.id
+          } as any)
+        } else {
+          // User not found
+          setSearchResult({ email: email || searchEmail, not_found: true, search_type: 'email' } as any)
+        }
+      } else if (email) {
+        // Search by email only
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('email', email.toLowerCase())
           .single()
 
-        setSearchResult({
-          ...profile,
-          friendship_status: existingFriendship?.status || null,
-          is_requester: existingFriendship?.requester_id === currentUser.id
-        } as any)
-      } else {
-        // User not found - this is where we want to show the invite option
-        console.log('User not found, showing invite option for:', searchEmail)
-        setSearchResult({ email: searchEmail, not_found: true } as any)
+        if (profile && !error) {
+          const { data: existingFriendship } = await supabase
+            .from('friendships')
+            .select('*')
+            .or(
+              `and(requester_id.eq.${currentUser.id},addressee_id.eq.${profile.id}),and(requester_id.eq.${profile.id},addressee_id.eq.${currentUser.id})`
+            )
+            .single()
+
+          setSearchResult({
+            ...profile,
+            friendship_status: existingFriendship?.status || null,
+            is_requester: existingFriendship?.requester_id === currentUser.id
+          } as any)
+        } else {
+          setSearchResult({ email: email, not_found: true, search_type: 'email' } as any)
+        }
+      } else if (phone) {
+        // Search by phone only (using last 9 digits)
+        const normalizedPhone = normalizeSearchPhone(phone)
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .ilike('phone_number', `%${normalizedPhone}`)
+        
+        const profile = profiles?.[0] // Take first match
+        
+        if (profile && !error && profiles.length > 0) {
+          const { data: existingFriendship } = await supabase
+            .from('friendships')
+            .select('*')
+            .or(
+              `and(requester_id.eq.${currentUser.id},addressee_id.eq.${profile.id}),and(requester_id.eq.${profile.id},addressee_id.eq.${currentUser.id})`
+            )
+            .single()
+
+          setSearchResult({
+            ...profile,
+            friendship_status: existingFriendship?.status || null,
+            is_requester: existingFriendship?.requester_id === currentUser.id
+          } as any)
+        } else {
+          setSearchResult({ phone_number: phone, not_found: true, search_type: 'phone' } as any)
+        }
       }
+
     } catch (error) {
       console.error('Error searching user:', error)
-      // Always show invite option on any error
-      setSearchResult({ email: searchEmail, not_found: true } as any)
+      // Always show appropriate message based on search type
+      if (phone && !email) {
+        setSearchResult({ phone_number: phone, not_found: true, search_type: 'phone' } as any)
+      } else {
+        setSearchResult({ email: email || searchEmail, not_found: true, search_type: 'email' } as any)
+      }
     } finally {
       setSearchLoading(false)
     }
@@ -341,17 +411,30 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
               Freund hinzufügen
             </h3>
             <div className="flex space-x-2">
-              <input
-                type="email"
-                value={searchEmail}
-                onChange={(e) => setSearchEmail(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && searchUser()}
-                placeholder="Email-Adresse eingeben..."
-                className="min-w-0 flex-1 px-3 py-2 border border-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
-              />
+              <div className="min-w-0 flex-1 space-y-2">
+                <input
+                  type="email"
+                  value={searchEmail}
+                  onChange={(e) => setSearchEmail(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && searchUser()}
+                  placeholder="Email-Adresse eingeben..."
+                  className="w-full px-3 py-2 border border-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
+                />
+                <input
+                  type="tel"
+                  value={searchPhone}
+                  onChange={(e) => setSearchPhone(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && searchUser()}
+                  placeholder="oder Telefonnummer eingeben..."
+                  className="w-full px-3 py-2 border border-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Suche funktioniert auch ohne Ländercode (z.B. 0176... oder 176...)
+                </p>
+              </div>
               <button
                 onClick={searchUser}
-                disabled={searchLoading || !searchEmail.trim()}
+                disabled={searchLoading || (!searchEmail.trim() && !searchPhone.trim())}
                 className="p-2 bg-white border border-black text-gray-900 shadow-md rounded-lg hover:bg-gray-50 disabled:opacity-50"
               >
                 {searchLoading ? 'Suche...' : 'Suchen'}
@@ -365,62 +448,68 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
                   <div className="space-y-3">
                     <div className="flex items-center text-gray-600">
                       <Mail size={16} className="mr-2" />
-                      <span>Kein Benutzer mit dieser Email gefunden</span>
+                      <span>
+                        {searchResult.search_type === 'phone' 
+                          ? 'Die Nummer wurde im System nicht gefunden, oder dein(e) Freund(in) hat sie nicht eingetragen =(' 
+                          : 'Kein Benutzer mit dieser Email gefunden'}
+                      </span>
                     </div>
-                    <div className="space-y-2">
-                      <button
-                        onClick={() => {
-                          console.log('Invite button clicked for:', searchResult.email)
-                          console.log('Has navigator.share:', !!navigator.share)
-                          // Check if it's mobile (where native share works better)
-                          const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-                          console.log('Is mobile device:', isMobile)
-                          
-                          if (navigator.share && isMobile) {
-                            handleInvite(searchResult.email)
-                          } else {
-                            setShowShareOptions(searchResult.email)
-                          }
-                        }}
-                        className="w-full py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md text-sm font-medium flex items-center justify-center space-x-2"
-                      >
-                        <Share2 size={16} />
-                        <span>Zu Free4 einladen!</span>
-                      </button>
-                      
-                      {/* Manual Share Options (Desktop) */}
-                      {showShareOptions === searchResult.email && (
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            onClick={() => {
-                              handleManualShare('gmail', searchResult.email)
-                              setShowShareOptions(null)
-                            }}
-                            className="py-2 px-3 bg-red-500 hover:bg-red-600 text-white rounded text-xs font-medium"
-                          >
-                            📧 Gmail
-                          </button>
-                          <button
-                            onClick={() => {
-                              handleManualShare('email', searchResult.email)
-                              setShowShareOptions(null)
-                            }}
-                            className="py-2 px-3 bg-gray-500 hover:bg-gray-600 text-white rounded text-xs font-medium"
-                          >
-                            ✉️ E-Mail
-                          </button>
-                          <button
-                            onClick={() => {
-                              handleManualShare('whatsapp', searchResult.email)
-                              setShowShareOptions(null)
-                            }}
-                            className="py-2 px-3 bg-green-500 hover:bg-green-600 text-white rounded text-xs font-medium"
-                          >
-                            💬 WhatsApp
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    {searchResult.search_type === 'email' && (
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => {
+                            console.log('Invite button clicked for:', searchResult.email)
+                            console.log('Has navigator.share:', !!navigator.share)
+                            // Check if it's mobile (where native share works better)
+                            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+                            console.log('Is mobile device:', isMobile)
+                            
+                            if (navigator.share && isMobile) {
+                              handleInvite(searchResult.email)
+                            } else {
+                              setShowShareOptions(searchResult.email)
+                            }
+                          }}
+                          className="w-full py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md text-sm font-medium flex items-center justify-center space-x-2"
+                        >
+                          <Share2 size={16} />
+                          <span>Zu Free4 einladen!</span>
+                        </button>
+                        
+                        {/* Manual Share Options (Desktop) */}
+                        {showShareOptions === searchResult.email && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              onClick={() => {
+                                handleManualShare('gmail', searchResult.email)
+                                setShowShareOptions(null)
+                              }}
+                              className="py-2 px-3 bg-red-500 hover:bg-red-600 text-white rounded text-xs font-medium"
+                            >
+                              📧 Gmail
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleManualShare('email', searchResult.email)
+                                setShowShareOptions(null)
+                              }}
+                              className="py-2 px-3 bg-gray-500 hover:bg-gray-600 text-white rounded text-xs font-medium"
+                            >
+                              ✉️ E-Mail
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleManualShare('whatsapp', searchResult.email)
+                                setShowShareOptions(null)
+                              }}
+                              className="py-2 px-3 bg-green-500 hover:bg-green-600 text-white rounded text-xs font-medium"
+                            >
+                              💬 WhatsApp
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">

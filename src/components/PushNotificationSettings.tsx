@@ -38,35 +38,33 @@ export default function PushNotificationSettings() {
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className={`p-2 rounded-lg ${isSubscribed ? 'bg-green-100' : 'bg-gray-100'}`}>
-            {isSubscribed ? (
-              <Bell className="h-5 w-5 text-green-600" />
-            ) : (
-              <BellOff className="h-5 w-5 text-gray-400" />
-            )}
-          </div>
-          <div>
-            <h3 className="font-medium text-gray-900">Push-Benachrichtigungen</h3>
-            <p className="text-sm text-gray-600">
-              Erhalte Benachrichtigungen über neue Matches
-            </p>
-          </div>
+      <div className="flex items-center space-x-3">
+        <div className={`p-2 rounded-lg ${isSubscribed ? 'bg-green-100' : 'bg-gray-100'}`}>
+          {isSubscribed ? (
+            <Bell className="h-5 w-5 text-green-600" />
+          ) : (
+            <BellOff className="h-5 w-5 text-gray-400" />
+          )}
         </div>
-        
-        {!isSubscribed && (
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={handleToggleSubscription}
-              disabled={loading}
-              className="px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 bg-blue-100 text-blue-700 hover:bg-blue-200"
-            >
-              {loading ? '...' : 'Aktivieren'}
-            </button>
-          </div>
-        )}
+        <div>
+          <h3 className="font-medium text-gray-900">Push-Benachrichtigungen</h3>
+          <p className="text-sm text-gray-600">
+            Erhalte Benachrichtigungen über neue Matches
+          </p>
+        </div>
       </div>
+      
+      {!isSubscribed && (
+        <div>
+          <button
+            onClick={handleToggleSubscription}
+            disabled={loading}
+            className="px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 bg-blue-100 text-blue-700 hover:bg-blue-200"
+          >
+            {loading ? '...' : 'Aktivieren'}
+          </button>
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-md p-3">
