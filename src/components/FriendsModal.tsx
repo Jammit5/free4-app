@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { X, Users, UserPlus, Mail, Check, X as XIcon, Share2, Copy } from 'lucide-react'
+import { X, Users, UserPlus, Mail, Check, X as XIcon, Share2, Copy, User } from 'lucide-react'
 import type { Profile, Friendship } from '@/lib/supabase'
 
 interface FriendsModalProps {
@@ -208,6 +208,9 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
       }
     } finally {
       setSearchLoading(false)
+      // Clear search fields after search for easier next search
+      setSearchEmail('')
+      setSearchPhone('')
     }
   }
 
@@ -555,10 +558,21 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
                 {pendingRequests.map((request) => (
                   <div key={request.id} className="flex items-center justify-between p-4 border border-white/20 rounded-lg">
                     <div className="flex items-center">
-                      <Mail size={16} className="mr-2 text-gray-600" />
+                      <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden mr-3 flex-shrink-0">
+                        {request.profile.avatar_url ? (
+                          <img 
+                            src={request.profile.avatar_url} 
+                            alt={request.profile.full_name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <User size={20} />
+                          </div>
+                        )}
+                      </div>
                       <div>
                         <p className="font-medium text-gray-900">{request.profile.full_name}</p>
-                        <p className="text-sm text-gray-600">{request.profile.email}</p>
                       </div>
                     </div>
                     <div className="flex justify-end space-x-4">
@@ -602,10 +616,21 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
                   <div key={friend.id}>
                     <div className="flex items-center justify-between space-x-2">
                       <div className="flex items-center min-w-0 flex-1">
-                        <Mail size={16} className="mr-2 text-gray-600 flex-shrink-0" />
+                        <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden mr-3 flex-shrink-0">
+                          {friend.profile.avatar_url ? (
+                            <img 
+                              src={friend.profile.avatar_url} 
+                              alt={friend.profile.full_name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              <User size={20} />
+                            </div>
+                          )}
+                        </div>
                         <div className="min-w-0">
                           <p className="font-medium text-gray-900 truncate">{friend.profile.full_name}</p>
-                          <p className="text-sm text-gray-600 truncate">{friend.profile.email}</p>
                         </div>
                       </div>
                       <button

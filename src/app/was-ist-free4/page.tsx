@@ -21,6 +21,12 @@ export default function WasIstFree4() {
           </h1>
 
           <div className="prose prose-lg max-w-none">
+            <div className="bg-red-50 p-6 rounded-lg border-l-4 border-red-400 mb-8">
+              <p className="text-red-800 font-semibold text-lg">
+                Vorab: Free4 ist KEINE Social Plattform. Hier wird nichts gepostet, nichts geteilt, nichts geliked und auch keine Nachrichten geschrieben. Keiner sieht deinen Namen, außer deine Freunde, die du selber zugefügt hast.
+              </p>
+            </div>
+
             <p className="text-xl font-semibold text-blue-600 mb-6 text-center">
               Schluss mit der Verabredungsqual!
             </p>
