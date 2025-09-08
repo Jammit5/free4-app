@@ -118,8 +118,21 @@ export async function POST(request: NextRequest) {
         notificationPayload = {
           ...notificationPayload,
           title: '👋 Neue Freundschaftsanfrage!',
-          body: `${data?.fromUserName || 'Jemand'} möchte dein Freund werden.`,
+          body: 'Du hast eine neue Freundschaftsanfrage erhalten!',
           tag: 'friend-request',
+          data: {
+            url: '/?tab=friends',
+            ...data
+          }
+        }
+        break
+
+      case 'friend_accepted':
+        notificationPayload = {
+          ...notificationPayload,
+          title: '🎉 Freundschaft bestätigt!',
+          body: 'Ihr seid jetzt befreundet!',
+          tag: 'friend-accepted',
           data: {
             url: '/?tab=friends',
             ...data
