@@ -58,7 +58,7 @@ export default function DebugLogs({ user }: DebugLogsProps) {
   useEffect(() => {
     if (showLogs) {
       fetchLogs()
-      intervalRef.current = setInterval(fetchLogs, 2000) // Auto-refresh every 2 seconds
+      intervalRef.current = setInterval(fetchLogs, 10000) // Auto-refresh every 10 seconds
       return () => {
         if (intervalRef.current) {
           clearInterval(intervalRef.current)
