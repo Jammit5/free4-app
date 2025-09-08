@@ -434,7 +434,11 @@ async function sendMatchNotifications(insertedMatches: any[], serviceSupabase: a
     addDebugLog(`📬 Match counts per user: ${JSON.stringify(Object.fromEntries(userMatchCounts))}`, 'info')
 
     // Send push notifications
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/push`, {
+    const pushUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/push`
+    console.log(`📬 DEBUG: Calling push API at: ${pushUrl}`)
+    addDebugLog(`📬 Calling push API at: ${pushUrl}`, 'debug')
+    
+    const response = await fetch(pushUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -448,6 +452,9 @@ async function sendMatchNotifications(insertedMatches: any[], serviceSupabase: a
       })
     })
 
+    console.log(`📬 DEBUG: Push API response status: ${response.status}`)
+    addDebugLog(`📬 Push API response status: ${response.status}`, response.ok ? 'info' : 'error')
+    
     if (response.ok) {
       
       // Track notifications as sent
@@ -465,11 +472,14 @@ async function sendMatchNotifications(insertedMatches: any[], serviceSupabase: a
         console.error('Error tracking sent notifications:', insertError)
       }
     } else {
-      console.error('Failed to send push notifications:', await response.text())
+      const errorText = await response.text()
+      console.error('Failed to send push notifications:', errorText)
+      addDebugLog(`❌ Push API failed: ${errorText}`, 'error')
     }
 
   } catch (error) {
     console.error('Error in sendMatchNotifications:', error)
+    addDebugLog(`❌ Match notification error: ${error}`, 'error')
   }
 }
 
