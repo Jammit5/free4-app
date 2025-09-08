@@ -338,6 +338,8 @@ export function usePushNotifications() {
         return
       }
 
+      console.log('🧪 Sending test notification for user:', user.id)
+      
       // Send test notification via server API to all user devices
       const response = await fetch('/api/push', {
         method: 'POST',
@@ -352,6 +354,8 @@ export function usePushNotifications() {
           }
         })
       })
+      
+      console.log('🧪 Push API response status:', response.status)
 
       if (response.ok) {
         console.log('✅ Test push notification sent successfully')
