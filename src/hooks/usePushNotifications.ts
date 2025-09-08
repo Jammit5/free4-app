@@ -44,7 +44,7 @@ export function usePushNotifications() {
         subscription = await registration.pushManager.getSubscription()
         isSubscribed = !!subscription
       } catch (err) {
-        console.log('Error checking push subscription:', err)
+        console.error('Error checking push subscription:', err)
       }
     }
 
@@ -208,6 +208,7 @@ export function usePushNotifications() {
     const hasPermission = await requestPermission()
     if (!hasPermission) return false
 
+    console.log('🔔 Starting push notification subscription process...')
     setLoading(true)
     setError(null)
 
@@ -215,17 +216,31 @@ export function usePushNotifications() {
       const registration = await navigator.serviceWorker.ready
       
       // VAPID public key from environment variables
-      const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
+      const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
       
+      if (!vapidPublicKey) {
+        console.error('❌ NEXT_PUBLIC_VAPID_PUBLIC_KEY not found in environment')
+        setError('Push notifications not configured on server')
+        return false
+      }
+      
+      console.log('🔔 VAPID public key found:', vapidPublicKey.substring(0, 10) + '...')
+      
+      console.log('🔔 Creating browser push subscription...')
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
       })
+      console.log('🔔 Browser subscription created:', subscription)
 
       // Save subscription to database
       const { data: { user } } = await supabase.auth.getUser()
+      console.log('🔔 Current user:', user?.id)
+      
       if (user) {
         const deviceId = getDeviceId()
+        console.log('🔔 Device ID:', deviceId)
+        console.log('🔔 Saving subscription to database...')
         
         // Use exactly the original schema
         const { error: dbError } = await supabase
@@ -244,9 +259,13 @@ export function usePushNotifications() {
           .eq('id', user.id)
 
         if (dbError) {
-          console.error('Error saving push subscription:', dbError)
+          console.error('❌ Error saving push subscription:', dbError)
+          setError('Failed to save push subscription to database')
+          return false
         } else if (profileError) {
-          console.error('Error updating profile push preference:', profileError)
+          console.error('❌ Error updating profile push preference:', profileError)
+          setError('Failed to update profile preference')
+          return false
         } else {
           console.log('✅ Push subscription and global preference saved successfully')
         }
@@ -339,6 +358,10 @@ export function usePushNotifications() {
 
 // Helper function to convert VAPID key
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  if (!base64String) {
+    throw new Error('VAPID public key is not configured')
+  }
+  
   const padding = '='.repeat((4 - base64String.length % 4) % 4)
   const base64 = (base64String + padding)
     .replace(/-/g, '+')
