@@ -13,6 +13,7 @@ import ImpressumModal from './ImpressumModal'
 import ContactModal from './ContactModal'
 import DataPrivacyModal from './DataPrivacyModal'
 import PWAInstallPrompt from './PWAInstallPrompt'
+import DebugLogs from './DebugLogs'
 import { useBackgroundSync } from '@/hooks/useBackgroundSync'
 
 interface DashboardProps {
@@ -831,6 +832,9 @@ export default function Dashboard({ user }: DashboardProps) {
 
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
+
+      {/* Debug Logs (only visible to Jammit) */}
+      <DebugLogs user={user} />
 
       <style jsx>{`
         @keyframes fadeOut {

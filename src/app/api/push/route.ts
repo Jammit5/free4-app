@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { createClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
+import { addDebugLog } from '@/app/api/debug-logs/route'
 
 // Service role client for server-side operations
 const serviceSupabase = createClient(
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
     const { userIds, type, data } = await request.json()
     
     console.log(`📬 DEBUG: Push API called with type: ${type}, userIds:`, userIds)
+    addDebugLog(`📬 Push API called with type: ${type}, userIds: [${userIds.join(', ')}]`, 'info')
 
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
       return NextResponse.json(

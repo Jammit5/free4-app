@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/utils/supabase/server'
+import { addDebugLog } from '@/app/api/debug-logs/route'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -428,6 +429,9 @@ async function sendMatchNotifications(insertedMatches: any[], serviceSupabase: a
     
     console.log(`📬 DEBUG: Sending match notifications to ${userIdsToNotify.length} users:`, userIdsToNotify)
     console.log(`📬 DEBUG: Match counts per user:`, Object.fromEntries(userMatchCounts))
+    
+    addDebugLog(`📬 Sending match notifications to ${userIdsToNotify.length} users: ${userIdsToNotify.join(', ')}`, 'info')
+    addDebugLog(`📬 Match counts per user: ${JSON.stringify(Object.fromEntries(userMatchCounts))}`, 'info')
 
     // Send push notifications
     const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/push`, {
