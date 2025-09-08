@@ -96,11 +96,18 @@ export function usePushNotifications() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data: dbSubscription } = await supabase
+      const { data: dbSubscription, error: dbError } = await supabase
         .from('push_subscriptions')
         .select('*')
         .eq('user_id', user.id)
         .single()
+        
+      // Handle database errors gracefully
+      if (dbError) {
+        console.log('Database subscription check failed:', dbError.message)
+        // Continue without database subscription check
+        return
+      }
 
       if (dbSubscription) {
         // We have a database subscription for this device, but need to check if browser subscription exists
