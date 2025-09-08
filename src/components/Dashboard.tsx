@@ -501,7 +501,7 @@ export default function Dashboard({ user }: DashboardProps) {
               Free<span className="text-sky-500">4</span>
             </h1>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-0 min-[370px]:space-x-1 min-[380px]:space-x-2 min-[400px]:space-x-4">
             <button 
               onClick={() => setShowProfileModal(true)}
               className="p-3 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
