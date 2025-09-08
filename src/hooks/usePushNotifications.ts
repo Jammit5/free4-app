@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { processQueuedNotifications } from '@/lib/pushNotificationService'
 
 interface PushNotificationState {
   isSupported: boolean
@@ -141,6 +142,13 @@ export function usePushNotifications() {
               }))
               
               console.log('📬 Browser subscription recreated successfully')
+              
+              // Process any queued notifications now that subscription is restored
+              try {
+                await processQueuedNotifications(user.id)
+              } catch (error) {
+                console.log('Error processing queued notifications:', error)
+              }
             } else {
               // Both database and browser subscriptions exist
               setState(prev => ({
@@ -273,6 +281,13 @@ export function usePushNotifications() {
         subscription,
         globallyEnabled: true
       }))
+
+      // Process any queued notifications now that subscription is active
+      try {
+        await processQueuedNotifications(user.id)
+      } catch (error) {
+        console.log('Error processing queued notifications:', error)
+      }
 
       console.log('Push notification subscription successful')
       return true

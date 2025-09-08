@@ -30,6 +30,87 @@ function configureWebPush() {
   )
 }
 
+export async function processQueuedNotifications(userId: string) {
+  try {
+    // Configure VAPID keys at runtime
+    configureWebPush()
+    
+    console.log(`📋 Processing queued notifications for user: ${userId}`)
+    addDebugLog(`📋 Processing queued notifications for user: ${userId}`, 'info')
+
+    // Get all queued notifications for this user
+    const { data: queuedNotifications, error: queueError } = await serviceSupabase
+      .from('notification_queue')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true })
+
+    if (queueError) {
+      console.error('Error fetching queued notifications:', queueError)
+      addDebugLog(`Error fetching queued notifications for ${userId}: ${queueError.message}`, 'error')
+      return
+    }
+
+    if (!queuedNotifications || queuedNotifications.length === 0) {
+      console.log(`📋 No queued notifications found for user: ${userId}`)
+      return
+    }
+
+    console.log(`📋 Found ${queuedNotifications.length} queued notifications for user ${userId}`)
+    addDebugLog(`📋 Found ${queuedNotifications.length} queued notifications for user ${userId}`, 'info')
+
+    // Process each queued notification
+    for (const queuedNotification of queuedNotifications) {
+      try {
+        // Send the queued notification
+        const result = await sendPushNotifications(
+          [userId], 
+          queuedNotification.notification_type, 
+          queuedNotification.notification_data
+        )
+
+        if (result.sent > 0) {
+          // Successfully sent, remove from queue
+          await serviceSupabase
+            .from('notification_queue')
+            .delete()
+            .eq('id', queuedNotification.id)
+          
+          console.log(`📋 Successfully sent and removed queued notification ${queuedNotification.id}`)
+          addDebugLog(`📋 Successfully sent and removed queued notification ${queuedNotification.id}`, 'info')
+        } else {
+          // Failed to send, increment retry count
+          await serviceSupabase
+            .from('notification_queue')
+            .update({ 
+              retry_count: queuedNotification.retry_count + 1,
+              failed_at: new Date().toISOString()
+            })
+            .eq('id', queuedNotification.id)
+          
+          console.log(`📋 Failed to send queued notification ${queuedNotification.id}, retry count: ${queuedNotification.retry_count + 1}`)
+          addDebugLog(`📋 Failed to send queued notification ${queuedNotification.id}, retry count: ${queuedNotification.retry_count + 1}`, 'warn')
+        }
+      } catch (error: any) {
+        console.error(`📋 Error processing queued notification ${queuedNotification.id}:`, error)
+        addDebugLog(`📋 Error processing queued notification ${queuedNotification.id}: ${error.message}`, 'error')
+        
+        // Increment retry count on error
+        await serviceSupabase
+          .from('notification_queue')
+          .update({ 
+            retry_count: queuedNotification.retry_count + 1,
+            failed_at: new Date().toISOString()
+          })
+          .eq('id', queuedNotification.id)
+      }
+    }
+  } catch (error: any) {
+    console.error('📋 Error processing queued notifications:', error)
+    addDebugLog(`📋 Error processing queued notifications: ${error.message}`, 'error')
+  }
+}
+
 export async function sendPushNotifications(userIds: string[], type: string, data: any = {}) {
   try {
     // Configure VAPID keys at runtime
@@ -162,8 +243,25 @@ export async function sendPushNotifications(userIds: string[], type: string, dat
       } catch (error: any) {
         console.error(`❌ Failed to send push notification to user ${subscription.user_id}:`, error.message)
         
-        // Note: We no longer delete subscriptions for 410/404 errors to keep profile settings accurate
-        // Subscriptions are only deleted when user accounts are deleted
+        // If subscription is invalid (410/404), queue notification for retry and delete invalid subscription
+        if (error.statusCode === 410 || error.statusCode === 404) {
+          console.log(`📋 Queueing notification for user ${subscription.user_id} due to invalid subscription`)
+          
+          // Queue the notification for retry when user resubscribes
+          await serviceSupabase
+            .from('notification_queue')
+            .insert({
+              user_id: subscription.user_id,
+              notification_type: type,
+              notification_data: data || {}
+            })
+          
+          // Delete the invalid subscription
+          await serviceSupabase
+            .from('push_subscriptions')
+            .delete()
+            .eq('user_id', subscription.user_id)
+        }
         
         return { success: false, userId: subscription.user_id, error: error.message }
       }
