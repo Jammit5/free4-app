@@ -162,13 +162,8 @@ export async function sendPushNotifications(userIds: string[], type: string, dat
       } catch (error: any) {
         console.error(`❌ Failed to send push notification to user ${subscription.user_id}:`, error.message)
         
-        // If the subscription is invalid, remove it from database
-        if (error.statusCode === 410 || error.statusCode === 404) {
-          await serviceSupabase
-            .from('push_subscriptions')
-            .delete()
-            .eq('user_id', subscription.user_id)
-        }
+        // Note: We no longer delete subscriptions for 410/404 errors to keep profile settings accurate
+        // Subscriptions are only deleted when user accounts are deleted
         
         return { success: false, userId: subscription.user_id, error: error.message }
       }
