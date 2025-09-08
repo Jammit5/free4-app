@@ -47,6 +47,7 @@ export default function Dashboard({ user }: DashboardProps) {
     loadPendingRequestsCount()
   }, [user])
 
+
   useEffect(() => {
     if (events.length > 0) {
       // Only load server-side matches after events are loaded
@@ -54,6 +55,54 @@ export default function Dashboard({ user }: DashboardProps) {
       loadServerSideMatches()
     }
   }, [events])
+
+  // Real-time subscription to matches table
+  useEffect(() => {
+    if (!user?.id || events.length === 0) return
+
+    console.log('🔄 Setting up real-time matches subscription for user:', user.id)
+    
+    // Subscribe to changes in matches table that involve this user's events
+    const eventIds = events.map(e => e.id)
+    
+    const subscription = supabase
+      .channel(`matches-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'matches',
+          filter: `user_free4_id=in.(${eventIds.join(',')})` 
+        },
+        (payload) => {
+          console.log('🔄 Match change detected:', payload)
+          // Refresh matches when any change occurs
+          loadServerSideMatches()
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to INSERT, UPDATE, DELETE
+          schema: 'public', 
+          table: 'matches',
+          filter: `matched_free4_id=in.(${eventIds.join(',')})` 
+        },
+        (payload) => {
+          console.log('🔄 Match change detected (reverse):', payload)
+          // Refresh matches when any change occurs
+          loadServerSideMatches()
+        }
+      )
+      .subscribe()
+
+    // Cleanup subscription on unmount or when events change
+    return () => {
+      console.log('🔄 Cleaning up matches subscription')
+      supabase.removeChannel(subscription)
+    }
+  }, [user.id, events.map(e => e.id).join(',')]) // Re-subscribe when events change
 
   const loadPendingRequestsCount = async () => {
     try {
@@ -245,6 +294,7 @@ export default function Dashboard({ user }: DashboardProps) {
   }
 
   const loadServerSideMatches = async () => {
+    setIsRefreshingMatches(true)
     try {
       // Get the current session token
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
@@ -348,6 +398,8 @@ export default function Dashboard({ user }: DashboardProps) {
 
     } catch (error) {
       // Silent error handling
+    } finally {
+      setIsRefreshingMatches(false)
     }
   }
 
