@@ -37,7 +37,6 @@ export default function Dashboard({ user }: DashboardProps) {
   const [showImpressum, setShowImpressum] = useState(false)
   const [showContact, setShowContact] = useState(false)
   const [showDataPrivacy, setShowDataPrivacy] = useState(false)
-  const matchCheckInterval = useRef<NodeJS.Timeout | null>(null)
   
   // PWA Background Sync
   const { triggerSync } = useBackgroundSync()
@@ -51,39 +50,10 @@ export default function Dashboard({ user }: DashboardProps) {
   useEffect(() => {
     if (events.length > 0) {
       // Only load server-side matches after events are loaded
-      // Match calculation happens explicitly on save/delete/5min-interval
+      // Match calculation happens explicitly on save/delete/edit
       loadServerSideMatches()
     }
   }, [events])
-
-  // Set up 5-minute interval for match checking
-  useEffect(() => {
-    const startMatchInterval = () => {
-      // Clear any existing interval
-      if (matchCheckInterval.current) {
-        clearInterval(matchCheckInterval.current)
-      }
-      
-      // Set up new interval (5 minutes = 300000ms)
-      matchCheckInterval.current = setInterval(() => {
-        if (events.length > 0) {
-          console.log('🔄 Automatic match check (5min interval)')
-          findMatchesForEvents()
-        }
-      }, 300000) // 5 minutes
-    }
-
-    if (events.length > 0) {
-      startMatchInterval()
-    }
-
-    // Cleanup interval on unmount
-    return () => {
-      if (matchCheckInterval.current) {
-        clearInterval(matchCheckInterval.current)
-      }
-    }
-  }, [events.length > 0]) // Only restart when events become available
 
   const loadPendingRequestsCount = async () => {
     try {

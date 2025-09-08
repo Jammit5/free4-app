@@ -433,8 +433,9 @@ async function sendMatchNotifications(insertedMatches: any[], serviceSupabase: a
     addDebugLog(`📬 Sending match notifications to ${userIdsToNotify.length} users: ${userIdsToNotify.join(', ')}`, 'info')
     addDebugLog(`📬 Match counts per user: ${JSON.stringify(Object.fromEntries(userMatchCounts))}`, 'info')
 
-    // Send push notifications
-    const pushUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/push`
+    // Send push notifications - use absolute URL construction for server-side fetch
+    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'
+    const pushUrl = `${baseUrl}/api/push`
     console.log(`📬 DEBUG: Calling push API at: ${pushUrl}`)
     addDebugLog(`📬 Calling push API at: ${pushUrl}`, 'debug')
     
