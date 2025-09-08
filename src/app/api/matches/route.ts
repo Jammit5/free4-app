@@ -426,6 +426,8 @@ async function sendMatchNotifications(insertedMatches: any[], serviceSupabase: a
 
     const userIdsToNotify = Array.from(userMatchCounts.keys())
     
+    console.log(`📬 DEBUG: Sending match notifications to ${userIdsToNotify.length} users:`, userIdsToNotify)
+    console.log(`📬 DEBUG: Match counts per user:`, Object.fromEntries(userMatchCounts))
 
     // Send push notifications
     const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/push`, {

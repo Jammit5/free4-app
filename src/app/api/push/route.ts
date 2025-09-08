@@ -37,6 +37,8 @@ export async function POST(request: NextRequest) {
     configureWebPush()
     
     const { userIds, type, data } = await request.json()
+    
+    console.log(`📬 DEBUG: Push API called with type: ${type}, userIds:`, userIds)
 
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
       return NextResponse.json(
