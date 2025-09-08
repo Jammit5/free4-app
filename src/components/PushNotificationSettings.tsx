@@ -8,6 +8,7 @@ export default function PushNotificationSettings() {
     isSupported,
     permission,
     isSubscribed,
+    globallyEnabled,
     loading,
     error,
     subscribe,
@@ -29,7 +30,7 @@ export default function PushNotificationSettings() {
   }
 
   const handleToggleSubscription = async () => {
-    if (isSubscribed) {
+    if (globallyEnabled) {
       await unsubscribe()
     } else {
       await subscribe()
@@ -39,8 +40,8 @@ export default function PushNotificationSettings() {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
       <div className="flex items-center space-x-3">
-        <div className={`p-2 rounded-lg ${isSubscribed ? 'bg-green-100' : 'bg-gray-100'}`}>
-          {isSubscribed ? (
+        <div className={`p-2 rounded-lg ${globallyEnabled ? 'bg-green-100' : 'bg-gray-100'}`}>
+          {globallyEnabled ? (
             <Bell className="h-5 w-5 text-green-600" />
           ) : (
             <BellOff className="h-5 w-5 text-gray-400" />
@@ -49,12 +50,12 @@ export default function PushNotificationSettings() {
         <div>
           <h3 className="font-medium text-gray-900">Push-Benachrichtigungen</h3>
           <p className="text-sm text-gray-600">
-            Erhalte Benachrichtigungen über neue Matches
+            Erhalte Benachrichtigungen auf allen deinen Geräten
           </p>
         </div>
       </div>
       
-      {!isSubscribed && (
+      {!globallyEnabled && (
         <div>
           <button
             onClick={handleToggleSubscription}
@@ -80,21 +81,26 @@ export default function PushNotificationSettings() {
         </div>
       )}
 
-      {isSubscribed && (
+      {globallyEnabled && (
         <div className="bg-green-50 border border-green-200 rounded-md p-3 space-y-3">
           <div className="flex items-center space-x-2">
             <Bell className="h-4 w-4 text-green-600" />
             <p className="text-sm text-green-700">
-              Du erhältst jetzt Benachrichtigungen über neue Matches und Freundschaftsanfragen.
+              Du erhältst auf allen deinen Geräten Benachrichtigungen über neue Matches und Freundschaftsanfragen.
             </p>
           </div>
-          <button
-            onClick={handleToggleSubscription}
-            disabled={loading}
-            className="px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 bg-red-100 text-red-700 hover:bg-red-200"
-          >
-            {loading ? '...' : 'Deaktivieren'}
-          </button>
+          <div className="space-y-2">
+            <p className="text-xs text-green-600">
+              {isSubscribed ? 'Dieses Gerät ist registriert' : 'Dieses Gerät wird beim nächsten Laden automatisch registriert'}
+            </p>
+            <button
+              onClick={handleToggleSubscription}
+              disabled={loading}
+              className="px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 bg-red-100 text-red-700 hover:bg-red-200"
+            >
+              {loading ? '...' : 'Für alle Geräte deaktivieren'}
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -515,15 +515,26 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
                     )}
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between">
+                  <div className="space-y-3">
                     <div className="flex items-center">
-                      <Mail size={16} className="mr-2 text-gray-600" />
+                      <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden mr-3 flex-shrink-0">
+                        {searchResult.avatar_url ? (
+                          <img 
+                            src={searchResult.avatar_url} 
+                            alt={searchResult.full_name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <User size={20} />
+                          </div>
+                        )}
+                      </div>
                       <div>
                         <p className="font-medium text-gray-900">{searchResult.full_name}</p>
-                        <p className="text-sm text-gray-600">{searchResult.email}</p>
                       </div>
                     </div>
-                    <div>
+                    <div className="flex justify-center">
                       {searchResult.friendship_status === 'accepted' && (
                         <span className="text-green-600 flex items-center">
                           <Check size={16} className="mr-1" />

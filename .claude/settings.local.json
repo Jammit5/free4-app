@@ -20,7 +20,11 @@
       "WebFetch(domain:til.simonwillison.net)",
       "Bash(rd:*)",
       "Bash(npm run build:*)",
-      "Bash(gh run list:*)"
+      "Bash(gh run list:*)",
+      "Bash(/bashes)",
+      "Bash(psql:*)",
+      "Bash(node:*)",
+      "Bash(npx vercel:*)"
     ],
     "deny": [],
     "ask": []

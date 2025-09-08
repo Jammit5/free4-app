@@ -113,7 +113,6 @@ export async function POST(request: NextRequest) {
       userId = url.searchParams.get('userId')
     }
     
-    console.log(`🚀 POST /api/matches called for userId: ${userId}`)
     
     if (!userId) {
       return NextResponse.json({ error: 'User ID required in body or query params' }, { status: 400 })
@@ -142,9 +141,8 @@ export async function POST(request: NextRequest) {
         throw new Error('User ID mismatch')
       }
       
-      console.log('🔐 POST: Validated user from token:', tokenUserId)
     } catch (error) {
-      console.error('❌ POST: Token validation failed:', error instanceof Error ? error.message : String(error))
+      console.error('POST: Token validation failed:', error instanceof Error ? error.message : String(error))
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
@@ -155,10 +153,8 @@ export async function POST(request: NextRequest) {
     )
 
     const currentTime = new Date().toISOString()
-    console.log(`⏰ Current time: ${currentTime}`)
     
     // Get all user's Free4 events using service client (user already validated)
-    console.log(`🔍 Searching for events with userId: ${userId}, after: ${currentTime}`)
     const { data: userEvents, error: userEventsError } = await serviceSupabase
       .from('free4_events')
       .select('*')
@@ -166,17 +162,12 @@ export async function POST(request: NextRequest) {
       .gte('end_time', currentTime) // Only future events
     
     if (userEventsError) {
-      console.error('❌ Error fetching user events:', userEventsError)
+      console.error('Error fetching user events:', userEventsError)
       return NextResponse.json({ error: 'Failed to fetch user events' }, { status: 500 })
     }
 
-    console.log(`📅 Found ${userEvents?.length || 0} user events`)
-    if (userEvents && userEvents.length > 0) {
-      console.log('📝 User events:', userEvents.map(e => ({ id: e.id, title: e.title, end_time: e.end_time })))
-    }
 
     if (!userEvents || userEvents.length === 0) {
-      console.log('⚠️ No future events found for user')
       return NextResponse.json({ matches: [], message: 'No future events found' })
     }
 
@@ -188,11 +179,9 @@ export async function POST(request: NextRequest) {
       .eq('status', 'accepted')
 
     if (!friendships || friendships.length === 0) {
-      console.log('👥 No friends found')
       return NextResponse.json({ matches: [], message: 'No friends found' })
     }
 
-    console.log(`👥 Found ${friendships.length} friendships`)
     const friendIds = friendships.map(f => 
       f.requester_id === userId ? f.addressee_id : f.requester_id
     )
@@ -208,46 +197,24 @@ export async function POST(request: NextRequest) {
       .gte('end_time', new Date().toISOString()) // Only future events
 
     if (!friendEvents || friendEvents.length === 0) {
-      console.log('📅 No friend events found')
       return NextResponse.json({ matches: [], message: 'No friend events found' })
     }
 
-    console.log(`📅 Found ${friendEvents.length} friend events`)
 
 
     // Calculate all matches with optimized filtering
     const allMatches = []
-    const startTime = Date.now()
-    console.log(`🔄 Starting optimized match calculation between ${userEvents.length} user events and ${friendEvents.length} friend events`)
-    
-    let totalFriendEvents = 0
-    let totalRelevantEvents = 0
-    let totalPreciseCalculations = 0
 
     for (const userEvent of userEvents) {
-      console.log(`\n👤 Checking user event: ${userEvent.title} (${userEvent.id})`)
-      console.log(`   📅 Time: ${userEvent.start_time} to ${userEvent.end_time}`)
-      console.log(`   📍 Location: ${userEvent.location_name} (${userEvent.latitude}, ${userEvent.longitude})`)
-      console.log(`   🎯 Radius: ${userEvent.radius_km}km`)
-      
       // Skip events without location
       if (!userEvent.latitude || !userEvent.longitude) {
-        console.log(`   ❌ Skipping: No coordinates`)
         continue
       }
 
-      // 🚀 OPTIMIZATION: Pre-filter friend events by time and rough location
+      // Pre-filter friend events by time and rough location
       const relevantFriendEvents = filterRelevantEvents(userEvent, friendEvents)
-      totalFriendEvents += friendEvents.length
-      totalRelevantEvents += relevantFriendEvents.length
-      console.log(`   🎯 Filtered from ${friendEvents.length} to ${relevantFriendEvents.length} relevant events (${Math.round((1 - relevantFriendEvents.length / friendEvents.length) * 100)}% reduction)`)
 
       for (const friendEvent of relevantFriendEvents) {
-        totalPreciseCalculations++
-        console.log(`\n  👥 Against friend event: ${friendEvent.title} (${friendEvent.id})`)
-        console.log(`     📅 Time: ${friendEvent.start_time} to ${friendEvent.end_time}`)
-        console.log(`     📍 Location: ${friendEvent.location_name} (${friendEvent.latitude}, ${friendEvent.longitude})`)
-        console.log(`     🎯 Radius: ${friendEvent.radius_km}km`)
         
         // Note: Coordinate and rough time/distance checks already done in pre-filtering
         // Only precise calculations needed now
@@ -262,10 +229,8 @@ export async function POST(request: NextRequest) {
 
         // Check if within radius (use larger radius for checking)
         const maxRadius = Math.max(userEvent.radius_km, friendEvent.radius_km)
-        console.log(`     📏 Distance: ${distance.toFixed(2)}km, Max radius: ${maxRadius}km`)
         
         if (distance > maxRadius) {
-          console.log(`     ❌ Skipping: Distance too far (${distance.toFixed(2)}km > ${maxRadius}km)`)
           continue
         }
 
@@ -277,16 +242,12 @@ export async function POST(request: NextRequest) {
           friendEvent.end_time
         )
 
-        console.log(`     ⏰ Time overlap: ${timeOverlap.overlap ? `${timeOverlap.minutes} minutes` : 'No overlap'}`)
-        
         if (!timeOverlap.overlap || timeOverlap.minutes < 30) {
-          console.log(`     ❌ Skipping: ${!timeOverlap.overlap ? 'No time overlap' : `Overlap too short (${timeOverlap.minutes} < 30 min)`}`)
           continue // Minimum 30 min overlap
         }
 
         // Calculate match score
         const matchScore = calculateMatchScore(distance, timeOverlap.minutes, maxRadius)
-        console.log(`     🎯 Match score: ${matchScore}`)
         
         // Calculate meeting point (midpoint between locations)
         const meetingLat = (userEvent.latitude + friendEvent.latitude) / 2
@@ -309,32 +270,16 @@ export async function POST(request: NextRequest) {
           status: 'active'
         }
 
-        console.log(`     ✅ MATCH FOUND! Adding to results`)
         allMatches.push(match)
       }
     }
 
-
-    // Performance summary
-    const endTime = Date.now()
-    const processingTime = endTime - startTime
-    const reductionPercentage = totalFriendEvents > 0 ? Math.round((1 - totalRelevantEvents / totalFriendEvents) * 100) : 0
-    
-    console.log(`\n🚀 PERFORMANCE OPTIMIZATION SUMMARY:`)
-    console.log(`   ⏱️  Total processing time: ${processingTime}ms`)
-    console.log(`   📊 Events before filtering: ${totalFriendEvents}`)
-    console.log(`   🎯 Events after filtering: ${totalRelevantEvents} (${reductionPercentage}% reduction)`)
-    console.log(`   🔢 Precise calculations: ${totalPreciseCalculations}`)
-    console.log(`   💡 Performance gain: ~${Math.round(totalFriendEvents / Math.max(totalPreciseCalculations, 1))}x faster`)
-
-    console.log(`🔄 Found ${allMatches.length} potential matches`)
 
     if (allMatches.length === 0) {
       return NextResponse.json({ matches: [], message: 'No matches found' })
     }
 
     // Clear existing matches for this user (both directions)
-    console.log('🗑️ Clearing existing matches...')
     const { error: deleteError } = await serviceSupabase
       .from('matches')
       .delete()
@@ -345,13 +290,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert new matches with upsert to handle duplicates
-    console.log('💾 Inserting new matches...')
-    console.log('📋 Matches to insert:', allMatches.map(m => ({
-      user_free4_id: m.user_free4_id,
-      matched_free4_id: m.matched_free4_id,
-      match_score: m.match_score
-    })))
-    
     const { data: insertedMatches, error: insertError } = await serviceSupabase
       .from('matches')
       .upsert(allMatches, { 
@@ -365,47 +303,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to save matches' }, { status: 500 })
     }
 
-    console.log(`✅ Successfully inserted ${insertedMatches?.length || 0} matches`)
 
     // Send push notifications for new matches (only if we have matches)
     if (insertedMatches && insertedMatches.length > 0) {
       try {
-        // Get unique user IDs who should receive notifications
-        const matchedUserIds = [...new Set(
-          insertedMatches.map((match: any) => {
-            // Extract user IDs from both sides of the match
-            return [match.user_free4_id, match.matched_free4_id]
-          }).flat()
-        )]
-
-        // Get the actual user IDs from the event IDs
-        const { data: matchedEvents } = await supabase
-          .from('free4_events')
-          .select('user_id')
-          .in('id', matchedUserIds)
-
-        if (matchedEvents && matchedEvents.length > 0) {
-          const userIdsToNotify = [...new Set(matchedEvents.map(e => e.user_id))]
-          
-          console.log(`📬 Sending match notifications to ${userIdsToNotify.length} users`)
-
-          // Send push notifications asynchronously (don't wait for it)
-          fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/push`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              userIds: userIdsToNotify,
-              type: 'new_matches',
-              data: {
-                matchCount: insertedMatches.length
-              }
-            })
-          }).catch(err => console.log('Push notification error:', err))
-        }
+        await sendMatchNotifications(insertedMatches, serviceSupabase)
       } catch (pushError) {
-        console.log('❌ Push notification setup failed:', pushError)
         // Don't fail the main request if push notifications fail
       }
     }
@@ -416,12 +319,151 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ POST Match calculation error:', error)
-    console.error('❌ Stack trace:', error instanceof Error ? error.stack : 'No stack trace')
+    console.error('POST Match calculation error:', error)
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json({ 
       error: 'Internal server error',
       details: error instanceof Error ? error.message : String(error)
     }, { status: 500 })
+  }
+}
+
+// Function to send match notifications with deduplication and creator exclusion
+async function sendMatchNotifications(insertedMatches: any[], serviceSupabase: any) {
+  try {
+    
+    // Use the inserted matches directly, they already contain the needed data
+    const matchDetails = insertedMatches
+
+    if (!matchDetails || matchDetails.length === 0) {
+      return
+    }
+
+    // Get event details separately for both user and matched events
+    const allEventIds = [
+      ...matchDetails.map(m => m.user_free4_id),
+      ...matchDetails.map(m => m.matched_free4_id)
+    ]
+
+    
+    const { data: eventDetails } = await serviceSupabase
+      .from('free4_events')
+      .select('id, user_id, created_at, title')
+      .in('id', allEventIds)
+    
+
+    if (!eventDetails || eventDetails.length === 0) {
+      return
+    }
+
+    // Create a map of event ID to event details for easy lookup
+    const eventMap = new Map(eventDetails.map(event => [event.id, event]))
+
+    // Process each match to determine who should get notifications
+    const notificationsToSend: { matchId: string, userId: string, isCreator: boolean }[] = []
+    
+    for (const match of matchDetails) {
+      const userEvent = eventMap.get(match.user_free4_id)
+      const matchedEvent = eventMap.get(match.matched_free4_id)
+      
+      if (!userEvent || !matchedEvent) {
+        continue
+      }
+
+      // Determine who created the most recent event (should be excluded from notification)
+      const userEventTime = new Date(userEvent.created_at)
+      const matchedEventTime = new Date(matchedEvent.created_at)
+      const mostRecentCreatorId = userEventTime > matchedEventTime ? userEvent.user_id : matchedEvent.user_id
+
+
+      // Add notifications for both users, marking the recent creator
+      notificationsToSend.push({
+        matchId: match.id,
+        userId: userEvent.user_id,
+        isCreator: userEvent.user_id === mostRecentCreatorId
+      })
+      
+      notificationsToSend.push({
+        matchId: match.id,
+        userId: matchedEvent.user_id,
+        isCreator: matchedEvent.user_id === mostRecentCreatorId
+      })
+    }
+
+    // Filter out creators and check for already sent notifications
+    const potentialNotifications = notificationsToSend.filter(notif => !notif.isCreator)
+    
+    if (potentialNotifications.length === 0) {
+      return
+    }
+
+    // Check which notifications have already been sent
+    const { data: alreadySent } = await supabase
+      .from('match_notifications_sent')
+      .select('match_id, user_id')
+      .in('match_id', potentialNotifications.map(n => n.matchId))
+      .in('user_id', potentialNotifications.map(n => n.userId))
+
+    const alreadySentSet = new Set(
+      (alreadySent || []).map(sent => `${sent.match_id}-${sent.user_id}`)
+    )
+
+    // Filter out already sent notifications
+    const newNotifications = potentialNotifications.filter(notif => 
+      !alreadySentSet.has(`${notif.matchId}-${notif.userId}`)
+    )
+
+    if (newNotifications.length === 0) {
+      return
+    }
+
+    // Group notifications by user and count matches per user
+    const userMatchCounts = new Map<string, number>()
+    newNotifications.forEach(notif => {
+      const current = userMatchCounts.get(notif.userId) || 0
+      userMatchCounts.set(notif.userId, current + 1)
+    })
+
+    const userIdsToNotify = Array.from(userMatchCounts.keys())
+    
+
+    // Send push notifications
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/push`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userIds: userIdsToNotify,
+        type: 'new_matches',
+        data: {
+          matchCount: Array.from(userMatchCounts.values()).reduce((sum, count) => sum + count, 0)
+        }
+      })
+    })
+
+    if (response.ok) {
+      
+      // Track notifications as sent
+      const notificationRecords = newNotifications.map(notif => ({
+        match_id: notif.matchId,
+        user_id: notif.userId,
+        sent_at: new Date().toISOString()
+      }))
+
+      const { error: insertError } = await serviceSupabase
+        .from('match_notifications_sent')
+        .insert(notificationRecords)
+
+      if (insertError) {
+        console.error('Error tracking sent notifications:', insertError)
+      }
+    } else {
+      console.error('Failed to send push notifications:', await response.text())
+    }
+
+  } catch (error) {
+    console.error('Error in sendMatchNotifications:', error)
   }
 }
 
@@ -458,9 +500,8 @@ export async function GET(request: NextRequest) {
         throw new Error('User ID mismatch')
       }
       
-      console.log('🔐 GET: Validated user from token:', tokenUserId)
     } catch (error) {
-      console.error('❌ GET: Token validation failed:', error instanceof Error ? error.message : String(error))
+      console.error('GET: Token validation failed:', error instanceof Error ? error.message : String(error))
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
@@ -504,8 +545,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ matches: matches || [] })
 
   } catch (error) {
-    console.error('❌ GET matches error:', error)
-    console.error('❌ GET Stack trace:', error instanceof Error ? error.stack : 'No stack trace')
+    console.error('GET matches error:', error)
+    console.error('GET Stack trace:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json({ 
       error: 'Internal server error',
       details: error instanceof Error ? error.message : String(error)

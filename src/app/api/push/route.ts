@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
 
-// VAPID keys - in production, these should be in environment variables
-const VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa40HI80YM96Zl68G0-6FZDmUa5eVCyfUwKNh1y-k3_-mKh8W-FZRYHaMLq8-8'
-const VAPID_PRIVATE_KEY = 'gSDwsDZYlkm6IXNF3vU8AEF3j4zJ1lJk7gOuFHVfv7A'
+// Service role client for server-side operations
+const serviceSupabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+)
+
+// VAPID keys from environment variables
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!
 
 // Configure web-push with VAPID keys
 webpush.setVapidDetails(
@@ -24,12 +37,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`📬 Sending ${type} push notifications to ${userIds.length} users`)
 
-    // Get push subscriptions for the specified users
-    const { data: subscriptions, error: subscriptionsError } = await supabase
+    // Get push subscriptions for users who have globally enabled notifications
+    const { data: subscriptions, error: subscriptionsError } = await serviceSupabase
       .from('push_subscriptions')
-      .select('*')
+      .select(`
+        *,
+        profiles!push_subscriptions_user_id_fkey(push_notifications_enabled)
+      `)
       .in('user_id', userIds)
 
     if (subscriptionsError) {
@@ -41,9 +56,20 @@ export async function POST(request: NextRequest) {
     }
 
     if (!subscriptions || subscriptions.length === 0) {
-      console.log('📬 No push subscriptions found for users:', userIds)
       return NextResponse.json(
         { message: 'No subscriptions found', sent: 0 },
+        { status: 200 }
+      )
+    }
+
+    // Filter subscriptions for users who have globally enabled push notifications
+    const enabledSubscriptions = subscriptions.filter(sub => 
+      sub.profiles?.push_notifications_enabled === true
+    )
+
+    if (enabledSubscriptions.length === 0) {
+      return NextResponse.json(
+        { message: 'No enabled subscriptions found', sent: 0 },
         { status: 200 }
       )
     }
@@ -101,10 +127,9 @@ export async function POST(request: NextRequest) {
         }
     }
 
-    console.log('📬 Notification payload:', notificationPayload)
 
-    // Send notifications to all subscriptions
-    const sendPromises = subscriptions.map(async (subscription) => {
+    // Send notifications to all enabled subscriptions
+    const sendPromises = enabledSubscriptions.map(async (subscription) => {
       try {
         const pushSubscription = JSON.parse(subscription.subscription)
         
@@ -113,14 +138,12 @@ export async function POST(request: NextRequest) {
           JSON.stringify(notificationPayload)
         )
         
-        console.log(`✅ Push notification sent to user: ${subscription.user_id}`)
         return { success: true, userId: subscription.user_id }
       } catch (error: any) {
         console.error(`❌ Failed to send push notification to user ${subscription.user_id}:`, error.message)
         
         // If the subscription is invalid, remove it from database
         if (error.statusCode === 410 || error.statusCode === 404) {
-          console.log(`🗑️ Removing invalid subscription for user: ${subscription.user_id}`)
           await supabase
             .from('push_subscriptions')
             .delete()
@@ -135,7 +158,6 @@ export async function POST(request: NextRequest) {
     const successCount = results.filter(r => r.success).length
     const failureCount = results.filter(r => !r.success).length
 
-    console.log(`📬 Push notification results: ${successCount} sent, ${failureCount} failed`)
 
     return NextResponse.json({
       message: `Push notifications processed`,

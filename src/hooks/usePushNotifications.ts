@@ -8,6 +8,7 @@ interface PushNotificationState {
   permission: NotificationPermission | null
   isSubscribed: boolean
   subscription: PushSubscription | null
+  globallyEnabled: boolean
 }
 
 export function usePushNotifications() {
@@ -15,7 +16,8 @@ export function usePushNotifications() {
     isSupported: false,
     permission: null,
     isSubscribed: false,
-    subscription: null
+    subscription: null,
+    globallyEnabled: false
   })
 
   const [loading, setLoading] = useState(false)
@@ -23,6 +25,8 @@ export function usePushNotifications() {
 
   useEffect(() => {
     checkSupport()
+    checkDatabaseSubscription()
+    checkGlobalPreference()
   }, [])
 
   const checkSupport = async () => {
@@ -44,12 +48,123 @@ export function usePushNotifications() {
       }
     }
 
-    setState({
+    setState(prev => ({
+      ...prev,
       isSupported,
       permission,
       isSubscribed,
       subscription
-    })
+    }))
+  }
+
+  const getDeviceId = () => {
+    // Create a unique device identifier based on browser fingerprint
+    const userAgent = navigator.userAgent
+    const screen = `${window.screen.width}x${window.screen.height}`
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    return btoa(`${userAgent}-${screen}-${timezone}`).substring(0, 20)
+  }
+
+  const checkGlobalPreference = async () => {
+    if (typeof window === 'undefined') return
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('push_notifications_enabled')
+        .eq('id', user.id)
+        .single()
+
+      if (profile) {
+        setState(prev => ({
+          ...prev,
+          globallyEnabled: profile.push_notifications_enabled || false
+        }))
+      }
+    } catch (err) {
+      console.log('Error checking global preference:', err)
+    }
+  }
+
+  const checkDatabaseSubscription = async () => {
+    if (typeof window === 'undefined') return
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const deviceId = getDeviceId()
+      const { data: dbSubscription } = await supabase
+        .from('push_subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('device_id', deviceId)
+        .single()
+
+      if (dbSubscription) {
+        // We have a database subscription for this device, but need to check if browser subscription exists
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+          try {
+            const registration = await navigator.serviceWorker.ready
+            const browserSubscription = await registration.pushManager.getSubscription()
+            
+            if (!browserSubscription) {
+              // Database has subscription but browser doesn't - recreate browser subscription
+              console.log('📬 Database subscription found but browser subscription missing, recreating...')
+              const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
+              
+              const newSubscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+              })
+
+              // Update database with new subscription
+              await supabase
+                .from('push_subscriptions')
+                .update({
+                  subscription: JSON.stringify(newSubscription.toJSON()),
+                  device_info: {
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    timestamp: new Date().toISOString()
+                  }
+                })
+                .eq('user_id', user.id)
+                .eq('device_id', deviceId)
+
+              setState(prev => ({
+                ...prev,
+                isSubscribed: true,
+                subscription: newSubscription
+              }))
+              
+              console.log('📬 Browser subscription recreated successfully')
+            } else {
+              // Both database and browser subscriptions exist
+              setState(prev => ({
+                ...prev,
+                isSubscribed: true,
+                subscription: browserSubscription
+              }))
+              console.log('📬 Both database and browser subscriptions found')
+            }
+          } catch (err) {
+            console.log('Error recreating browser subscription:', err)
+            // If we can't recreate, clean up database
+            await supabase
+              .from('push_subscriptions')
+              .delete()
+              .eq('user_id', user.id)
+              .eq('device_id', deviceId)
+          }
+        }
+      }
+    } catch (err) {
+      console.log('Error checking database subscription:', err)
+    }
   }
 
   const requestPermission = async (): Promise<boolean> => {
@@ -99,8 +214,8 @@ export function usePushNotifications() {
     try {
       const registration = await navigator.serviceWorker.ready
       
-      // VAPID public key - you would generate this for production
-      const vapidPublicKey = 'BEl62iUYgUivxIkv69yViEuiBIa40HI80YM96Zl68G0-6FZDmUa5eVCyfUwKNh1y-k3_-mKh8W-FZRYHaMLq8-8'
+      // VAPID public key from environment variables
+      const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
       
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
@@ -110,25 +225,38 @@ export function usePushNotifications() {
       // Save subscription to database
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        const deviceId = getDeviceId()
+        
+        // Use exactly the original schema
         const { error: dbError } = await supabase
           .from('push_subscriptions')
           .upsert({
             user_id: user.id,
-            subscription: JSON.stringify(subscription.toJSON()),
-            created_at: new Date().toISOString()
+            subscription: JSON.stringify(subscription.toJSON())
           }, {
             onConflict: 'user_id'
           })
 
+        // IMPORTANT: Also update the global preference in profiles table
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ push_notifications_enabled: true })
+          .eq('id', user.id)
+
         if (dbError) {
           console.error('Error saving push subscription:', dbError)
+        } else if (profileError) {
+          console.error('Error updating profile push preference:', profileError)
+        } else {
+          console.log('✅ Push subscription and global preference saved successfully')
         }
       }
 
       setState(prev => ({
         ...prev,
         isSubscribed: true,
-        subscription
+        subscription,
+        globallyEnabled: true
       }))
 
       console.log('Push notification subscription successful')
@@ -143,32 +271,39 @@ export function usePushNotifications() {
   }
 
   const unsubscribe = async (): Promise<boolean> => {
-    if (!state.subscription) {
-      return true
-    }
-
     setLoading(true)
     setError(null)
 
     try {
-      await state.subscription.unsubscribe()
+      // Unsubscribe browser subscription if it exists
+      if (state.subscription) {
+        await state.subscription.unsubscribe()
+      }
 
-      // Remove subscription from database
+      // Remove ALL subscriptions for this user and disable globally
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        // Remove all device subscriptions for this user
         await supabase
           .from('push_subscriptions')
           .delete()
           .eq('user_id', user.id)
+
+        // Set global preference to disabled
+        await supabase
+          .from('profiles')
+          .update({ push_notifications_enabled: false })
+          .eq('id', user.id)
       }
 
       setState(prev => ({
         ...prev,
         isSubscribed: false,
-        subscription: null
+        subscription: null,
+        globallyEnabled: false
       }))
 
-      console.log('Push notification unsubscribed')
+      console.log('Push notifications disabled for all devices')
       return true
     } catch (err) {
       console.error('Error unsubscribing from push notifications:', err)
@@ -197,7 +332,8 @@ export function usePushNotifications() {
     requestPermission,
     subscribe,
     unsubscribe,
-    sendTestNotification
+    sendTestNotification,
+    checkGlobalPreference
   }
 }
 
