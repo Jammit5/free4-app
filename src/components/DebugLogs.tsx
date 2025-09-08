@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Bug, X, Trash2, RefreshCw } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 
@@ -18,9 +18,12 @@ export default function DebugLogs({ user }: DebugLogsProps) {
   const [showLogs, setShowLogs] = useState(false)
   const [logs, setLogs] = useState<DebugLog[]>([])
   const [loading, setLoading] = useState(false)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Only show for Jammit
-  if (user.id !== '9ebc731a-0b10-470b-a7ec-82084405f7d9') {
+  // Only show for Jammit - but check after state initialization
+  const isJammit = user.id === '9ebc731a-0b10-470b-a7ec-82084405f7d9'
+  
+  if (!isJammit) {
     return null
   }
 
@@ -55,10 +58,21 @@ export default function DebugLogs({ user }: DebugLogsProps) {
   useEffect(() => {
     if (showLogs) {
       fetchLogs()
-      const interval = setInterval(fetchLogs, 2000) // Auto-refresh every 2 seconds
-      return () => clearInterval(interval)
+      intervalRef.current = setInterval(fetchLogs, 2000) // Auto-refresh every 2 seconds
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current)
+          intervalRef.current = null
+        }
+      }
+    } else {
+      // Clear interval when modal is closed
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
     }
-  }, [showLogs])
+  }, [showLogs, user.id])
 
   return (
     <>
