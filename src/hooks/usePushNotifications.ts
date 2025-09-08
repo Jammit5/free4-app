@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { processQueuedNotifications } from '@/lib/pushNotificationService'
 
 interface PushNotificationState {
   isSupported: boolean
@@ -23,6 +22,31 @@ export function usePushNotifications() {
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Helper function to process queued notifications via API
+  const processQueuedNotificationsAPI = async (userId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) return
+
+      const response = await fetch('/api/process-queued-notifications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ userId })
+      })
+
+      if (response.ok) {
+        console.log('📋 Queued notifications processed successfully')
+      } else {
+        console.log('📋 Failed to process queued notifications:', await response.text())
+      }
+    } catch (error) {
+      console.log('📋 Error calling process queued notifications API:', error)
+    }
+  }
 
   useEffect(() => {
     checkSupport()
@@ -144,11 +168,7 @@ export function usePushNotifications() {
               console.log('📬 Browser subscription recreated successfully')
               
               // Process any queued notifications now that subscription is restored
-              try {
-                await processQueuedNotifications(user.id)
-              } catch (error) {
-                console.log('Error processing queued notifications:', error)
-              }
+              await processQueuedNotificationsAPI(user.id)
             } else {
               // Both database and browser subscriptions exist
               setState(prev => ({
@@ -283,11 +303,7 @@ export function usePushNotifications() {
       }))
 
       // Process any queued notifications now that subscription is active
-      try {
-        await processQueuedNotifications(user.id)
-      } catch (error) {
-        console.log('Error processing queued notifications:', error)
-      }
+      await processQueuedNotificationsAPI(user.id)
 
       console.log('Push notification subscription successful')
       return true
