@@ -30,6 +30,8 @@
 - `src/app/api/matches/route.ts`: Core matching algorithm with comprehensive logging
 - `src/app/api/contact/route.ts`: Contact form handler
 - `src/app/api/push/route.ts`: Push notification server using web-push
+- `src/app/api/process-queued-notifications/route.ts`: API endpoint for processing queued notifications
+- `src/lib/pushNotificationService.ts`: Centralized push notification logic with queue processing
 - `src/hooks/usePushNotifications.ts`: Client-side push notification management
 - `src/hooks/useBackgroundSync.ts`: Background sync for offline functionality
 
@@ -38,6 +40,7 @@
 - free4_events table with geolocation and radius data
 - matches table with detailed overlap calculations and meeting points
 - push_subscriptions table for web push notifications
+- notification_queue table for failed notification retry system
 - friendships table for user relationships
 - Avatar storage with RLS policies
 
@@ -71,9 +74,11 @@
 - Secure push notification subscriptions
 
 ## Deployment & Development Process
-- **Automatic Deployment**: `git push origin main` triggers Vercel automatic deployments
+- **CRITICAL: Always test build locally before deploying** - Run `npm run build` to catch client/server import issues
+- **Automatic Deployment**: `git push origin main` triggers Vercel automatic deployments  
 - **Environment**: Vercel production with complete PWA setup and offline functionality
 - **Development Approach**: Always discuss and research solutions before implementation - no code changes without prior discussion and approval
+- **Build Testing**: Mandatory local build verification prevents deployment failures from client/server module conflicts
 - **Environment Variables**: VAPID keys, Supabase credentials, and service role keys configured in Vercel dashboard
 - **Push Notification Infrastructure**: Complete web-push integration with deployment protection bypass
 
@@ -136,6 +141,16 @@
 6. **Debug Logging System**: Created restricted debug endpoint (`/api/debug-logs`) with modal interface for troubleshooting
 7. **Notification Text Updates**: Standardized match notifications to "Free4 - neues Match! Du hast ein neues Match! Schau nach wer Zeit hat!"
 8. **Automatic Dashboard Refresh**: Users now see new matches instantly when other users create matching Free4s, plus receive push notifications
+
+### Session 9: Notification Queue System & Build Fix
+1. **Comprehensive Notification Queue System**: Implemented bulletproof notification retry system for failed 410/404 push notifications
+2. **Database Schema Creation**: Added `notification_queue` table with RLS policies and proper indexing for failed notification storage
+3. **Auto-Resubscription Logic**: Enhanced existing subscription check to automatically recreate browser subscriptions from database records
+4. **Queue Processing Function**: Created `processQueuedNotifications()` to retry queued notifications when subscriptions are restored
+5. **Smart Retry Integration**: Queued notifications processed after both manual subscription and automatic resubscription
+6. **Client/Server Architecture Fix**: Resolved Next.js build error by creating `/api/process-queued-notifications` API endpoint
+7. **Deployment Protection**: Replaced direct server function imports with authenticated API calls to prevent webpack module conflicts
+8. **Zero Notification Loss**: System ensures no push notifications are lost when users clear browser data or subscriptions become invalid
 
 ### Session 6: Mobile-First UI Transformation
 1. **Dashboard Header Enhancement**: Integrated Free4 logo with 30% larger mobile-friendly buttons and text (text-4xl, size-32 icons)
@@ -276,3 +291,13 @@
 - **Subscription Management**: Proper cleanup on component unmount and event changes
 - **Channel Isolation**: Each user gets unique subscription channel (`matches-${user.id}`)
 - **Filtered Listening**: Only monitors changes involving user's specific Free4 events
+
+## Notification Queue Architecture
+- **Bulletproof Notification System**: Zero notification loss even when browser data is cleared or subscriptions become invalid
+- **Database Table**: `notification_queue` with UUID, user_id, notification_type, notification_data, retry_count, and timestamps
+- **Queue Processing Function**: `processQueuedNotifications()` in `pushNotificationService.ts` handles retry logic with comprehensive error handling
+- **API Endpoint**: `/api/process-queued-notifications` provides authenticated access to queue processing from client-side
+- **Automatic Queuing**: Failed 410/404 notifications automatically queued with invalid subscription cleanup
+- **Smart Retry Integration**: Queued notifications processed after successful subscription recreation and manual subscription
+- **Client/Server Separation**: Proper architecture prevents webpack module conflicts while maintaining functionality
+- **RLS Security**: Row Level Security policies ensure users can only access their own queued notifications
