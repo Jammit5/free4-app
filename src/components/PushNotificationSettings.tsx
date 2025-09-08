@@ -93,13 +93,22 @@ export default function PushNotificationSettings() {
             <p className="text-xs text-green-600">
               {isSubscribed ? 'Dieses Gerät ist registriert' : 'Dieses Gerät wird beim nächsten Laden automatisch registriert'}
             </p>
-            <button
-              onClick={handleToggleSubscription}
-              disabled={loading}
-              className="px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 bg-red-100 text-red-700 hover:bg-red-200"
-            >
-              {loading ? '...' : 'Für alle Geräte deaktivieren'}
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={sendTestNotification}
+                disabled={loading}
+                className="px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 bg-blue-100 text-blue-700 hover:bg-blue-200"
+              >
+                Test-Benachrichtigung
+              </button>
+              <button
+                onClick={handleToggleSubscription}
+                disabled={loading}
+                className="px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 bg-red-100 text-red-700 hover:bg-red-200"
+              >
+                {loading ? '...' : 'Für alle Geräte deaktivieren'}
+              </button>
+            </div>
           </div>
         </div>
       )}
