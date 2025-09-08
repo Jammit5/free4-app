@@ -15,19 +15,27 @@ const serviceSupabase = createClient(
   }
 )
 
-// VAPID keys from environment variables
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!
+// VAPID configuration function
+function configureWebPush() {
+  const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+  const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY
 
-// Configure web-push with VAPID keys
-webpush.setVapidDetails(
-  'mailto:noreply@free4app.com', // Contact email
-  VAPID_PUBLIC_KEY,
-  VAPID_PRIVATE_KEY
-)
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    throw new Error('VAPID keys not configured')
+  }
+
+  webpush.setVapidDetails(
+    'mailto:noreply@free4app.com',
+    VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY
+  )
+}
 
 export async function POST(request: NextRequest) {
   try {
+    // Configure VAPID keys at runtime
+    configureWebPush()
+    
     const { userIds, type, data } = await request.json()
 
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
