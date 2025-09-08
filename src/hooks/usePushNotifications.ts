@@ -96,12 +96,10 @@ export function usePushNotifications() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const deviceId = getDeviceId()
       const { data: dbSubscription } = await supabase
         .from('push_subscriptions')
         .select('*')
         .eq('user_id', user.id)
-        .eq('device_id', deviceId)
         .single()
 
       if (dbSubscription) {
@@ -125,15 +123,9 @@ export function usePushNotifications() {
               await supabase
                 .from('push_subscriptions')
                 .update({
-                  subscription: JSON.stringify(newSubscription.toJSON()),
-                  device_info: {
-                    userAgent: navigator.userAgent,
-                    platform: navigator.platform,
-                    timestamp: new Date().toISOString()
-                  }
+                  subscription: JSON.stringify(newSubscription.toJSON())
                 })
                 .eq('user_id', user.id)
-                .eq('device_id', deviceId)
 
               setState(prev => ({
                 ...prev,
@@ -158,7 +150,6 @@ export function usePushNotifications() {
               .from('push_subscriptions')
               .delete()
               .eq('user_id', user.id)
-              .eq('device_id', deviceId)
           }
         }
       }
@@ -238,8 +229,6 @@ export function usePushNotifications() {
       console.log('🔔 Current user:', user?.id)
       
       if (user) {
-        const deviceId = getDeviceId()
-        console.log('🔔 Device ID:', deviceId)
         console.log('🔔 Saving subscription to database...')
         
         // Use exactly the original schema
