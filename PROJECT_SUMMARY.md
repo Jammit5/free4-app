@@ -70,11 +70,12 @@
 - Row Level Security policies on all database operations
 - Secure push notification subscriptions
 
-## Deployment
-- Configured for Vercel with automatic deployments
-- Complete PWA setup with offline functionality
-- Environment configs for dev/production
-- Web-push integration for notifications
+## Deployment & Development Process
+- **Automatic Deployment**: `git push origin main` triggers Vercel automatic deployments
+- **Environment**: Vercel production with complete PWA setup and offline functionality
+- **Development Approach**: Always discuss and research solutions before implementation - no code changes without prior discussion and approval
+- **Environment Variables**: VAPID keys, Supabase credentials, and service role keys configured in Vercel dashboard
+- **Push Notification Infrastructure**: Complete web-push integration with deployment protection bypass
 
 ## Recent Major Implementations (Latest Sessions)
 ### Session 1: PWA & Core Features
@@ -126,6 +127,16 @@
 7. **Data Export Compliance**: Export API extended to include phone numbers for GDPR Art. 20 portability
 8. **User Experience Polish**: Auto-clear search fields, visual friend list with avatars instead of email icons
 
+### Session 8: Push Notifications & Real-Time Dashboard Updates
+1. **Push Notification System Fix**: Resolved Vercel deployment protection 401 errors by creating shared `pushNotificationService.ts`
+2. **Server-to-Server Authentication Bypass**: Replaced HTTP calls with direct function calls to avoid deployment protection barriers
+3. **Resource Optimization**: Removed periodic 5-minute match checking intervals to save server resources
+4. **Real-Time Dashboard Updates**: Implemented Supabase real-time subscriptions to matches table for instant updates
+5. **Bidirectional Match Listening**: Subscriptions monitor both `user_free4_id` and `matched_free4_id` for comprehensive coverage
+6. **Debug Logging System**: Created restricted debug endpoint (`/api/debug-logs`) with modal interface for troubleshooting
+7. **Notification Text Updates**: Standardized match notifications to "Free4 - neues Match! Du hast ein neues Match! Schau nach wer Zeit hat!"
+8. **Automatic Dashboard Refresh**: Users now see new matches instantly when other users create matching Free4s, plus receive push notifications
+
 ### Session 6: Mobile-First UI Transformation
 1. **Dashboard Header Enhancement**: Integrated Free4 logo with 30% larger mobile-friendly buttons and text (text-4xl, size-32 icons)
 2. **Icon-Only Action Buttons**: Replaced text-based buttons with intuitive icons - Wrench (edit), Copy, Red X (delete) for better mobile UX
@@ -172,8 +183,12 @@
 - **Optional phone number feature** with full GDPR compliance and flexible search capabilities
 - **Enhanced friend discovery** with dual email/phone search and visual avatar-based friend list
 - **Complete privacy compliance** with explicit consent dialogs and purpose limitation
-- All major features implemented and tested
-- Ready for production use with automatic deployments
+- **Real-time push notifications** with working match notifications and friend request alerts
+- **Instant dashboard updates** via Supabase real-time subscriptions - no manual refresh needed
+- **Resource-optimized architecture** with eliminated periodic polling for better performance
+- **Production-ready debug system** with restricted access logging for troubleshooting
+- All major features implemented, tested, and deployed
+- **Auto-deployment pipeline** via git push to main branch with Vercel integration
 
 ## Help & Documentation System
 - **Help Button**: Question mark icon (`HelpCircle`) positioned top-right in login form
@@ -243,3 +258,21 @@
 - **Export Compliance**: Phone numbers included in GDPR Art. 20 data portability exports
 - **Enhanced Privacy Documentation**: Detailed processing purposes in updated privacy policy
 - **Anti-Social Platform Messaging**: Clear communication that Free4 is NOT a social media platform
+
+## Push Notification Architecture
+- **Shared Service Pattern**: `pushNotificationService.ts` centralizes all push logic and VAPID configuration
+- **Deployment Protection Bypass**: Direct function calls replace HTTP requests to avoid Vercel authentication barriers
+- **VAPID Runtime Configuration**: Keys loaded at function runtime, not module initialization
+- **Multi-Device Support**: Global notification setting controls all user devices via database relationship
+- **Notification Types**: Friend requests, friend acceptance, and match notifications with custom messages
+- **Error Handling**: Invalid subscription cleanup and comprehensive error logging
+- **Debug Integration**: All push operations logged to restricted debug endpoint for troubleshooting
+
+## Real-Time Dashboard System  
+- **Supabase Real-Time Subscriptions**: Listen to `matches` table changes for instant dashboard updates
+- **Bidirectional Match Monitoring**: Subscriptions track both `user_free4_id` and `matched_free4_id` columns
+- **Event-Driven Updates**: Dashboard refreshes automatically when matches are created, updated, or deleted
+- **Resource Optimization**: Eliminated periodic polling - updates only occur when actual changes happen  
+- **Subscription Management**: Proper cleanup on component unmount and event changes
+- **Channel Isolation**: Each user gets unique subscription channel (`matches-${user.id}`)
+- **Filtered Listening**: Only monitors changes involving user's specific Free4 events
