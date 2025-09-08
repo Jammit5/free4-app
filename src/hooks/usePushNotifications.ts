@@ -329,14 +329,37 @@ export function usePushNotifications() {
     }
   }
 
-  // Test notification
-  const sendTestNotification = () => {
-    if (state.permission === 'granted') {
-      new Notification('Free4 Test', {
-        body: 'Push notifications are working! 🎉',
-        icon: '/icon-192x192.png',
-        tag: 'test-notification'
+  // Test notification - sends real push notification via server
+  const sendTestNotification = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        console.error('User not logged in')
+        return
+      }
+
+      // Send test notification via server API to all user devices
+      const response = await fetch('/api/push', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userIds: [user.id],
+          type: 'test',
+          data: {
+            message: 'Push notifications are working! 🎉'
+          }
+        })
       })
+
+      if (response.ok) {
+        console.log('✅ Test push notification sent successfully')
+      } else {
+        console.error('❌ Failed to send test push notification:', await response.text())
+      }
+    } catch (error) {
+      console.error('❌ Error sending test push notification:', error)
     }
   }
 

@@ -127,6 +127,15 @@ export async function POST(request: NextRequest) {
         }
         break
 
+      case 'test':
+        notificationPayload = {
+          ...notificationPayload,
+          title: '🧪 Free4 Test',
+          body: data?.message || 'Push notifications are working! 🎉',
+          tag: 'test-notification'
+        }
+        break
+
       default:
         notificationPayload = {
           ...notificationPayload,
