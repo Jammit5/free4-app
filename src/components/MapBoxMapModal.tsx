@@ -495,7 +495,7 @@ export default function MapBoxMapModal({
               </div>
             )}
 
-            {/* Mobile Radius Controls - under map */}
+            {/* Mobile Umkreis Controls - under map */}
             {selectedLocation && isMobile && (
               <div className="mt-4 flex justify-center items-center space-x-4">
                 <button
@@ -550,7 +550,7 @@ export default function MapBoxMapModal({
             )}
           </div>
 
-          {/* Right side: Vertical Radius Slider - Desktop Only */}
+          {/* Right side: Vertical Umkreis Slider - Desktop Only */}
           {selectedLocation && !isMobile && (
             <div className="w-20 bg-gray-50 border-l border-gray-200 flex flex-col items-center justify-center py-6">
               <div className="flex flex-col items-center h-full">

@@ -504,7 +504,7 @@ export default function Dashboard({ user }: DashboardProps) {
           <div className="flex items-center space-x-0 min-[370px]:space-x-1 min-[380px]:space-x-2 min-[400px]:space-x-4">
             <button 
               onClick={() => setShowProfileModal(true)}
-              className="p-3 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
+              className="p-3 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50 cursor-pointer"
               title="Mein Profil"
             >
               {profile?.avatar_url ? (
@@ -519,7 +519,7 @@ export default function Dashboard({ user }: DashboardProps) {
             </button>
             <button 
               onClick={() => setShowFriendsModal(true)}
-              className="relative p-3 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
+              className="relative p-3 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50 cursor-pointer"
               title="Freunde"
             >
               <Users size={26} />
@@ -531,7 +531,7 @@ export default function Dashboard({ user }: DashboardProps) {
             </button>
             <button 
               onClick={handleLogout}
-              className="p-3 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50"
+              className="p-3 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50 cursor-pointer"
               title="Abmelden"
             >
               <LogOut size={26} />
@@ -595,7 +595,7 @@ export default function Dashboard({ user }: DashboardProps) {
                           {event.location_name || (event.location_type === 'online' ? 'Online' : 'Unbekannt')}
                           {event.location_type === 'physical' && event.radius_km && (
                             <span className="ml-1">
-                              ({event.radius_km === 0.1 ? 'Nur hier' : `${event.radius_km}km Radius`})
+                              ({event.radius_km === 0.1 ? 'Nur hier' : `${event.radius_km}km Umkreis`})
                             </span>
                           )}
                         </span>

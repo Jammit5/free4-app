@@ -275,7 +275,7 @@ export default function OSMMapModal({
             )}
           </div>
 
-          {/* Mobile Radius Controls - under map */}
+          {/* Mobile Umkreis Controls - under map */}
           {selectedLocation && isMobile && (
             <div className="mt-4 flex justify-center items-center space-x-4">
               <button
@@ -301,7 +301,7 @@ export default function OSMMapModal({
             </div>
           )}
 
-          {/* Desktop Radius Slider */}
+          {/* Desktop Umkreis Slider */}
           {selectedLocation && !isMobile && (
             <div className="mt-4">
               <div className="flex items-center justify-between mb-2">

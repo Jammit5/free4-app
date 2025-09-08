@@ -62,3 +62,10 @@ body {
   margin-left: -12px;
   margin-top: -41px;
 }
+
+/* Desktop cursor pointer for buttons */
+@media (hover: hover) and (pointer: fine) {
+  button {
+    cursor: pointer;
+  }
+}

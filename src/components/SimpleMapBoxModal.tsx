@@ -303,7 +303,7 @@ export default function SimpleMapBoxModal({
         <div className="flex justify-between items-center p-6 border-b flex-shrink-0">
           <h2 className="text-xl font-bold text-gray-900 flex items-center">
             <MapPin size={20} className="mr-2" />
-            Ort und Radius auswählen
+            Ort und Umkreis auswählen
           </h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <X size={24} />
@@ -314,7 +314,7 @@ export default function SimpleMapBoxModal({
           {/* Map Container */}
           <div className="flex-1 flex flex-col">
             <p className="text-sm text-gray-600 mb-4">
-              Klicke auf die Karte um einen Ort auszuwählen. Verwende den Slider um den Radius zu ändern:
+              Klicke auf die Karte um einen Ort auszuwählen. Verwende den Slider um den Umkreis zu ändern:
             </p>
             
             <div className="w-full h-96 bg-gray-200 border border-gray-300 rounded-lg overflow-hidden relative flex-shrink-0">
@@ -392,14 +392,14 @@ export default function SimpleMapBoxModal({
             </div>
           </div>
 
-          {/* Radius Control Sidebar */}
+          {/* Umkreis Control Sidebar */}
           <div className="w-80 flex-shrink-0 bg-gray-50 rounded-lg p-6 border">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Radius einstellen</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Umkreis einstellen</h3>
             
-            {/* Radius Slider */}
+            {/* Umkreis Slider */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-2">
-                <label className="text-sm font-medium text-gray-700">Radius</label>
+                <label className="text-sm font-medium text-gray-700">Umkreis</label>
                 <span className="text-lg font-bold text-blue-600">{radius.toFixed(1)} km</span>
               </div>
               <input
@@ -423,7 +423,7 @@ export default function SimpleMapBoxModal({
               </div>
             </div>
 
-            {/* Quick Radius Buttons */}
+            {/* Quick Umkreis Buttons */}
             <div className="mb-6">
               <label className="text-sm font-medium text-gray-700 block mb-2">Schnellauswahl</label>
               <div className="grid grid-cols-2 gap-2">
@@ -470,7 +470,7 @@ export default function SimpleMapBoxModal({
             {/* Instructions */}
             <div className="mt-6 p-3 bg-blue-50 rounded border-l-4 border-blue-400">
               <p className="text-sm text-blue-800">
-                <strong>Tipp:</strong> Beim Klick auf die Karte wird automatisch 1 km Radius gesetzt. Verwende den Slider oder die Buttons um ihn zu ändern.
+                <strong>Tipp:</strong> Beim Klick auf die Karte wird automatisch 1 km Umkreis gesetzt. Verwende den Slider oder die Buttons um ihn zu ändern.
               </p>
             </div>
           </div>
