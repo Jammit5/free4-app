@@ -99,8 +99,8 @@ export async function sendPushNotifications(userIds: string[], type: string, dat
       case 'new_matches':
         notificationPayload = {
           ...notificationPayload,
-          title: '🎉 Neue Matches!',
-          body: `Du hast ${data?.matchCount || ''} neue Matches! Schau wer Zeit hat.`,
+          title: 'Free4 - neues Match!',
+          body: 'Du hast ein neues Match! Schau nach wer Zeit hat!',
           tag: 'new-matches'
         }
         break
