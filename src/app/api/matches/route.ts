@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/utils/supabase/server'
 import { addDebugLog } from '@/app/api/debug-logs/route'
+import { sendPushNotifications } from '@/lib/pushNotificationService'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -433,30 +434,22 @@ async function sendMatchNotifications(insertedMatches: any[], serviceSupabase: a
     addDebugLog(`📬 Sending match notifications to ${userIdsToNotify.length} users: ${userIdsToNotify.join(', ')}`, 'info')
     addDebugLog(`📬 Match counts per user: ${JSON.stringify(Object.fromEntries(userMatchCounts))}`, 'info')
 
-    // Send push notifications - use absolute URL construction for server-side fetch
-    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'
-    const pushUrl = `${baseUrl}/api/push`
-    console.log(`📬 DEBUG: Calling push API at: ${pushUrl}`)
-    addDebugLog(`📬 Calling push API at: ${pushUrl}`, 'debug')
+    // Send push notifications using shared service (bypass deployment protection)
+    console.log(`📬 DEBUG: Calling push notification service`)
+    addDebugLog(`📬 Calling push notification service`, 'debug')
     
-    const response = await fetch(pushUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userIds: userIdsToNotify,
-        type: 'new_matches',
-        data: {
-          matchCount: Array.from(userMatchCounts.values()).reduce((sum, count) => sum + count, 0)
-        }
-      })
-    })
+    const pushResult = await sendPushNotifications(
+      userIdsToNotify,
+      'new_matches',
+      {
+        matchCount: Array.from(userMatchCounts.values()).reduce((sum, count) => sum + count, 0)
+      }
+    )
 
-    console.log(`📬 DEBUG: Push API response status: ${response.status}`)
-    addDebugLog(`📬 Push API response status: ${response.status}`, response.ok ? 'info' : 'error')
+    console.log(`📬 DEBUG: Push service result:`, pushResult)
+    addDebugLog(`📬 Push service result: ${pushResult.sent} sent, ${pushResult.failed} failed`, 'info')
     
-    if (response.ok) {
+    if (pushResult.sent > 0) {
       
       // Track notifications as sent
       const notificationRecords = newNotifications.map(notif => ({
@@ -473,9 +466,8 @@ async function sendMatchNotifications(insertedMatches: any[], serviceSupabase: a
         console.error('Error tracking sent notifications:', insertError)
       }
     } else {
-      const errorText = await response.text()
-      console.error('Failed to send push notifications:', errorText)
-      addDebugLog(`❌ Push API failed: ${errorText}`, 'error')
+      console.error('No push notifications were sent')
+      addDebugLog(`❌ No push notifications were sent`, 'error')
     }
 
   } catch (error) {
