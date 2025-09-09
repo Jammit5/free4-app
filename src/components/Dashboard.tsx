@@ -333,11 +333,21 @@ export default function Dashboard({ user }: DashboardProps) {
       const matches: {[eventId: string]: any[]} = {}
 
       // Transform server matches from match_details view (bidirectional)
+      // Use a Set to track unique match combinations to prevent displaying the same match twice
+      const seenMatchCombinations = new Set<string>()
+      
       result.matches?.forEach((match: any) => {
         // Check which event belongs to current user
         const userEvents = events.map(e => e.id)
         const isUserFree4 = userEvents.includes(match.user_free4_id)
         const isMatchedFree4 = userEvents.includes(match.matched_free4_id)
+        
+        // Create unique identifier for this match combination (normalize order)
+        const eventPair = [match.user_free4_id, match.matched_free4_id].sort().join('-')
+        if (seenMatchCombinations.has(eventPair)) {
+          return // Skip if we've already processed this match combination
+        }
+        seenMatchCombinations.add(eventPair)
         
         if (isUserFree4) {
           // Current user's event is user_free4_id
@@ -719,6 +729,7 @@ export default function Dashboard({ user }: DashboardProps) {
         onClose={() => setShowFriendsModal(false)}
         currentUser={user}
         onRequestsUpdated={loadPendingRequestsCount}
+        onFriendshipAccepted={findMatchesForEvents}
       />
 
       {/* Profile Modal */}

@@ -10,9 +10,10 @@ interface FriendsModalProps {
   onClose: () => void
   currentUser: any
   onRequestsUpdated?: () => void
+  onFriendshipAccepted?: () => void
 }
 
-export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsUpdated }: FriendsModalProps) {
+export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsUpdated, onFriendshipAccepted }: FriendsModalProps) {
   const [searchEmail, setSearchEmail] = useState('')
   const [searchPhone, setSearchPhone] = useState('')
   const [searchResult, setSearchResult] = useState<Profile | null>(null)
@@ -272,6 +273,14 @@ export default function FriendsModal({ isOpen, onClose, currentUser, onRequestsU
       loadFriends()
       loadPendingRequests()
       onRequestsUpdated?.()
+
+      // Trigger match calculation when friendship is accepted
+      if (accept && onFriendshipAccepted) {
+        console.log('🤝 Friendship accepted, triggering match calculation...')
+        setTimeout(() => {
+          onFriendshipAccepted()
+        }, 500) // Small delay to ensure friendship is fully processed
+      }
     } catch (error: any) {
       console.error('Error responding to request:', error)
       console.error('Error responding to friend request:', error.message)

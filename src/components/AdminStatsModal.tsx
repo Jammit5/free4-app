@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, TrendingUp, Users, Calendar, Activity } from 'lucide-react'
+import { X, TrendingUp, Users, Calendar, Activity, RefreshCcw } from 'lucide-react'
 
 interface AdminStats {
   totalUsers: number
@@ -20,6 +20,8 @@ export default function AdminStatsModal({ isOpen, onClose, userEmail }: AdminSta
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [rebuildLoading, setRebuildLoading] = useState(false)
+  const [rebuildResult, setRebuildResult] = useState<string | null>(null)
 
   useEffect(() => {
     if (isOpen && (userEmail === 'jammit@gmail.com' || userEmail === 'decapitaro@hotmail.com')) {
@@ -49,6 +51,43 @@ export default function AdminStatsModal({ isOpen, onClose, userEmail }: AdminSta
       console.error('Error loading admin stats:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const rebuildAllMatches = async () => {
+    setRebuildLoading(true)
+    setRebuildResult(null)
+    setError(null)
+    try {
+      const response = await fetch('/api/admin/rebuild-matches', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to rebuild matches')
+      }
+
+      const data = await response.json()
+      if (data.success) {
+        const { stats: rebuildStats } = data
+        setRebuildResult(
+          `✅ Erfolgreich! ${rebuildStats.matchesFound} Matches gefunden aus ${rebuildStats.totalEvents} Events in ${rebuildStats.processingTimeMs}ms`
+        )
+        // Reload stats to show updated match count
+        setTimeout(() => {
+          loadStats()
+        }, 1000)
+      } else {
+        throw new Error(data.error || 'Unknown error')
+      }
+    } catch (err) {
+      setError('Fehler beim Neuaufbau der Matches')
+      console.error('Error rebuilding matches:', err)
+    } finally {
+      setRebuildLoading(false)
     }
   }
 
@@ -169,13 +208,46 @@ export default function AdminStatsModal({ isOpen, onClose, userEmail }: AdminSta
                   </div>
                 </div>
 
-                {/* Refresh Button */}
-                <div className="text-center pt-4">
+                {/* Action Buttons */}
+                <div className="text-center pt-4 space-y-4">
+                  {/* Rebuild All Matches Button */}
+                  <div className="bg-red-50 rounded-lg p-4 border border-red-200">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-2">🔧 Admin Tools</h4>
+                    <p className="text-xs text-gray-600 mb-3">
+                      Alle Matches neu berechnen (ohne Push-Notifications)
+                    </p>
+                    <button
+                      onClick={rebuildAllMatches}
+                      disabled={rebuildLoading}
+                      className="py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mx-auto"
+                    >
+                      {rebuildLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Neuaufbau läuft...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCcw size={16} className="mr-2" />
+                          Rebuild All Matches
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Rebuild Result */}
+                  {rebuildResult && (
+                    <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                      <p className="text-sm text-green-800">{rebuildResult}</p>
+                    </div>
+                  )}
+
+                  {/* Refresh Stats Button */}
                   <button
                     onClick={loadStats}
                     className="py-3 px-6 bg-white border border-black text-gray-900 rounded-lg shadow-md hover:bg-gray-50"
                   >
-                    Aktualisieren
+                    Statistiken aktualisieren
                   </button>
                 </div>
               </div>
