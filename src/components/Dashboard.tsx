@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 import type { Free4Event, Profile } from '@/lib/supabase'
-import { Plus, LogOut, Users, Calendar, MapPin, User, Heart, X, Copy, RefreshCw, Wrench, ArrowRight } from 'lucide-react'
+import { Plus, LogOut, Users, Calendar, MapPin, User, Heart, X, Copy, RefreshCw, Wrench, ArrowRight, TrendingUp } from 'lucide-react'
 import Image from 'next/image'
 import CreateEventModal from './CreateEventModal'
 import FriendsModal from './FriendsModal'
@@ -12,6 +12,7 @@ import ProfileModal from './ProfileModal'
 import ImpressumModal from './ImpressumModal'
 import ContactModal from './ContactModal'
 import DataPrivacyModal from './DataPrivacyModal'
+import AdminStatsModal from './AdminStatsModal'
 import PWAInstallPrompt from './PWAInstallPrompt'
 import DebugLogs from './DebugLogs'
 import { useBackgroundSync } from '@/hooks/useBackgroundSync'
@@ -37,6 +38,7 @@ export default function Dashboard({ user }: DashboardProps) {
   const [showImpressum, setShowImpressum] = useState(false)
   const [showContact, setShowContact] = useState(false)
   const [showDataPrivacy, setShowDataPrivacy] = useState(false)
+  const [showAdminStats, setShowAdminStats] = useState(false)
   
   // PWA Background Sync
   const { triggerSync } = useBackgroundSync()
@@ -502,6 +504,16 @@ export default function Dashboard({ user }: DashboardProps) {
             </h1>
           </div>
           <div className="flex items-center space-x-0 min-[370px]:space-x-1 min-[380px]:space-x-2 min-[400px]:space-x-4">
+            {/* Admin Stats Button - Only visible for admin accounts */}
+            {(user.email === 'jammit@gmail.com' || user.email === 'decapitaro@hotmail.com') && (
+              <button 
+                onClick={() => setShowAdminStats(true)}
+                className="p-3 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50 cursor-pointer"
+                title="Admin Stats"
+              >
+                <TrendingUp size={26} />
+              </button>
+            )}
             <button 
               onClick={() => setShowProfileModal(true)}
               className="p-3 text-gray-900 bg-white border border-black rounded-lg shadow-md hover:bg-gray-50 cursor-pointer"
@@ -850,6 +862,13 @@ export default function Dashboard({ user }: DashboardProps) {
         isOpen={showDataPrivacy}
         onClose={() => setShowDataPrivacy(false)}
         onOpenContact={() => setShowContact(true)}
+      />
+
+      {/* Admin Stats Modal - Only for jammit@gmail.com */}
+      <AdminStatsModal 
+        isOpen={showAdminStats}
+        onClose={() => setShowAdminStats(false)}
+        userEmail={user.email || ''}
       />
 
       {/* PWA Install Prompt */}
