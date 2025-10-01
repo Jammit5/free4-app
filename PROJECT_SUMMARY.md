@@ -32,7 +32,8 @@
 - `src/app/api/push/route.ts`: Push notification server using web-push
 - `src/app/api/process-queued-notifications/route.ts`: API endpoint for processing queued notifications
 - `src/app/api/admin/stats/route.ts`: Admin statistics API with comprehensive user metrics
-- `src/components/AdminStatsModal.tsx`: Admin dashboard with user statistics and analytics
+- `src/app/api/admin/rebuild-matches/route.ts`: Silent admin match rebuild API without push notifications
+- `src/components/AdminStatsModal.tsx`: Admin dashboard with user statistics and rebuild functionality
 - `src/lib/pushNotificationService.ts`: Centralized push notification logic with queue processing
 - `src/hooks/usePushNotifications.ts`: Client-side push notification management
 - `src/hooks/useBackgroundSync.ts`: Background sync for offline functionality
@@ -163,7 +164,7 @@
 6. **Smart Desktop Detection**: CSS only applies pointer cursor on devices with hover capability and fine pointer control
 7. **Comprehensive UI Polish**: Updated MapBox, OSM, and SimpleMapBox modals with consistent "Umkreis" terminology
 
-### Session 11: Admin Statistics Dashboard Implementation
+### Session 11: Admin Statistics Dashboard & Match System Improvements
 1. **Admin Statistics Modal**: Complete admin dashboard with comprehensive user metrics and analytics
 2. **TrendingUp Button Integration**: Line graph symbol button in dashboard header restricted to admin accounts only
 3. **API Endpoint Creation**: `/api/admin/stats` with intelligent database queries and fallback mechanisms
@@ -172,6 +173,10 @@
 6. **Access Control**: Restricted to `jammit@gmail.com` and `decapitaro@hotmail.com` for production and dev testing
 7. **Real-Time Analytics**: Manual refresh capability with loading states and error handling
 8. **Statistical Insights**: Per-user averages, match rates, and activity percentages for app monitoring
+9. **Admin Rebuild All Matches**: Silent match rebuild functionality via `/api/admin/rebuild-matches` without push notifications
+10. **Friendship Match Trigger**: Automatic match calculation when friendship requests are accepted to capture existing Free4 overlaps
+11. **Bidirectional Match Deduplication**: Fixed duplicate profile display using normalized event-pair tracking in Dashboard
+12. **Comprehensive Admin Tools**: Complete admin interface with detailed rebuild statistics, processing metrics, and error handling
 
 ### Session 6: Mobile-First UI Transformation
 1. **Dashboard Header Enhancement**: Integrated Free4 logo with 30% larger mobile-friendly buttons and text (text-4xl, size-32 icons)
@@ -228,6 +233,9 @@
 - **Enhanced desktop UX** with smart cursor pointer detection for precise pointing devices
 - **Admin statistics dashboard** with comprehensive user metrics, analytics, and real-time monitoring capabilities
 - **Intelligent admin access control** restricted to authorized accounts with secure API endpoints
+- **Silent match rebuild functionality** for admin maintenance without triggering push notifications
+- **Automatic friendship-based match detection** ensuring no matches are missed when users become friends
+- **Bidirectional match deduplication** preventing duplicate profile displays in Dashboard
 - All major features implemented, tested, and deployed
 - **Auto-deployment pipeline** via git push to main branch with Vercel integration
 
